@@ -474,7 +474,7 @@
     <script>
         const tocData = [
             "[기적수업 서문]", 
-            "<교과서>", 
+            "[교과서]", 
             "교과서 서문",
             {
                 title: "제1장. 기적의 의미",
@@ -805,7 +805,7 @@
 
             const rangeMatch = !isObject && typeof title === 'string' ? title.match(/(\d+)과\s*~\s*(\d+)과/) : null;
 
-            if (title === "<교과서>" || title === "<학생용 연습서>" || title === "1부" || title === "2부") {
+            if (title === "[교과서]" || title === "<학생용 연습서>" || title === "1부" || title === "2부") {
                 li.className = 'toc-item toc-header';
                 li.innerHTML = `<div class="toc-title">${title}</div>`;
             } 
