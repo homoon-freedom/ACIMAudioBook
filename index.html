@@ -16,23 +16,26 @@
             --sub-bg-color: #F1F5F9;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: #2D3748;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-        }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: #2D3748;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0; /* 화면 여백 제거 */
+}
 
-        .container {
-            max-width: 700px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            padding: 30px;
-        }
+.container {
+    max-width: 100%; /* 최대 너비 제한 해제 (화면 꽉 채우기) */
+    width: 100%;
+    min-height: 100vh; /* 세로로도 최소한 화면 전체 높이를 채우도록 설정 */
+    margin: 0;
+    background: white;
+    border-radius: 0; /* 둥근 모서리 제거 */
+    box-shadow: none; /* 그림자 제거 */
+    padding: 20px;
+    box-sizing: border-box; /* 패딩이 너비 밖으로 튀어나가지 않도록 설정 */
+}
 
         .header-container {
             position: relative;
