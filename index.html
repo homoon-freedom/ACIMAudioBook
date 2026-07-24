@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기적수업 목차 및 오디오 노트</title>
+    <style>
+        :root {
+            --primary-color: #4A5568;
+            --bg-color: #F7FAFC;
+            --modal-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --hover-color: #EDF2F7;
+            --accent-color: #4299E1;
+            --folder-color: #2B6CB0;
+            --sub-bg-color: #F1F5F9;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: #2D3748;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+        }
+
+        /* 메인 헤더 레이아웃 */
+        .header-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-top: 10px;
+        }
+
+        .edit-mode-btn {
+            position: absolute;
+            left: 0;
+            background-color: #48BB78;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .edit-mode-btn:hover {
+            background-color: #38A169;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .toc-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .toc-item:not(.toc-header):not(.folder-item):hover {
+            background-color: var(--hover-color);
+        }
+
+        .toc-item:last-child {
+            border-bottom: none;
+        }
+
+        .toc-item.toc-header {
+            margin-top: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--primary-color);
+            cursor: default;
+        }
+
+        .toc-title {
+            flex-grow: 1;
+            padding: 5px 0;
+        }
+
+        .toc-item:not(.toc-header) .toc-title {
+            cursor: pointer;
+        }
+        
+        .toc-item:not(.toc-header) .toc-title:hover {
+            color: var(--accent-color);
+        }
+
+        /* 아코디언 스타일 */
+        .folder-item {
+            display: block;
+            padding: 0;
+        }
+
+        .folder-title-container {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .folder-title-container:hover {
+            background-color: var(--hover-color);
+        }
+
+        .folder-title {
+            color: var(--folder-color);
+            font-weight: bold;
+            flex-grow: 1;
+        }
+        
+        .folder-title::before {
+            content: "📂 ";
+            margin-right: 5px;
+        }
+
+        .sub-list {
+            display: none;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background-color: var(--sub-bg-color);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .sub-list.open {
+            display: block;
+        }
+
+        .sub-list .toc-item {
+            padding-left: 40px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        .sub-list .toc-item:last-child {
+            border-bottom: none;
+        }
+
+        /* 플레이 버튼 */
+        .play-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.1s, background-color 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .play-btn:hover {
+            background-color: #3182CE;
+            transform: scale(1.05);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--modal-bg);
+            width: 90%;
+            max-width: 600px;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
+            position: sticky;
+            top: 0;
+            background: var(--modal-bg);
+            z-index: 10;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+            color: var(--primary-color);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #A0AEC0;
+        }
+
+        .close-btn:hover {
+            color: #4A5568;
+        }
+
+        .audio-section {
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .audio-section label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #718096;
+        }
+
+        .audio-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .audio-inputs input[type="text"], .chapter-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        audio {
+            width: 100%;
+            height: 40px;
+            margin-top: 5px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            resize: vertical;
+            font-size: 15px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        textarea:focus:not([readonly]) {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+        }
+
+        textarea[readonly] {
+            background-color: #F8FAFC;
+            color: #4A5568;
+            cursor: default;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-save {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-save:hover {
+            background-color: #3182CE;
+        }
+
+        .toast {
+            visibility: hidden;
+            min-width: 200px;
+            background-color: #38A169;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 12px;
+            position: fixed;
+            z-index: 1100;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 15px;
+        }
+
+        .toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-container">
+            <button id="open-edit-modal-btn" class="edit-mode-btn">✏️ 편집</button>
+            <h1>기적수업 목차 및 노트</h1>
+        </div>
+        <ul class="toc-list" id="toc-list">
+            <!-- 메인 목차가 동적으로 생성됩니다 -->
+        </ul>
+    </div>
+
+    <!-- 1. 읽기 전용 모달 (목차 클릭 시 오픈) -->
+    <div class="modal-overlay" id="read-modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="read-modal-title">제목</h2>
+                <button class="close-btn" id="close-read-modal">&times;</button>
+            </div>
+            
+            <div class="audio-section">
+                <label>🎧 오디오 플레이어</label>
+                <audio id="read-audio-player" controls>
+                    <source src="" type="audio/mpeg">
+                    브라우저가 오디오 재생을 지원하지 않습니다.
+                </audio>
+            </div>
+
+            <!-- readonly 속성 추가 -->
+            <textarea id="read-note-textarea" readonly placeholder="작성된 노트가 없습니다. 좌측 상단의 [편집] 버튼을 눌러 내용을 작성해주세요."></textarea>
+        </div>
+    </div>
+
+    <!-- 2. 편집 전용 모달 (좌측 상단 편집 버튼 클릭 시 오픈) -->
+    <div class="modal-overlay" id="edit-modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">✏️ 노트 및 오디오 편집</h2>
+                <button class="close-btn" id="close-edit-modal">&times;</button>
+            </div>
+            
+            <!-- 목차 선택 드롭다운 -->
+            <div>
+                <label style="font-size: 13px; font-weight: bold; color: #718096; display:block; margin-bottom:5px;">📖 편집할 목차 선택</label>
+                <select id="edit-chapter-select" class="chapter-select">
+                    <!-- 스크립트를 통해 편집 가능한 목차가 채워집니다 -->
+                </select>
+            </div>
+
+            <div class="audio-section">
+                <label>🎧 오디오 파일 및 주소 등록</label>
+                <div class="audio-inputs">
+                    <input type="text" id="edit-audio-url-input" placeholder="웹 오디오 URL 주소 입력 (http://...)">
+                    <div>
+                        <label style="font-weight: normal; margin-bottom: 3px; display:block;">또는 내 컴퓨터에서 오디오 파일 첨부:</label>
+                        <input type="file" id="edit-audio-file-input" accept="audio/*, .mp3, audio/mpeg, audio/mp3">
+
+                    </div>
+                </div>
+            </div>
+
+            <textarea id="edit-note-textarea" placeholder="여기에 묵상 내용이나 노트를 작성하세요..."></textarea>
+            
+            <div class="modal-footer">
+                <button class="btn btn-save" id="save-btn">저장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">성공적으로 저장되었습니다.</div>
+
+    <script>
+        const tocData = [
+            "<서문>", "<교과서>", "서문", "제1장. 기적의 의미", "제2장. 분리와 속죄",
+            "제3장. 결백한 지각", "제4장. 에고의 허상", "제5장. 치유와 전일성",
+            "제6장. 사랑의 가르침", "제7장. 왕국의 선물", "제8장. 귀환",
+            "제9장. 속죄의 수용", "제10장. 병이라는 우상", "제11장. 하나님인가 에고인가",
+            "제12장. 성령의 교육과정", "제13장. 죄 없는 세상", "제14장. 진리의 가르침",
+            "제15장. 거룩한 순간", "제16장. 허상에 대한 용서", "제17장. 용서와 거룩한 관계",
+            "제18장. 꿈의 종결", "제19장. 평화의 달성", "제20장. 거룩함의 비전",
+            "제21장. 이성과 지각", "제22장. 구원과 거룩한 관계", "제23장. 자신과의 전쟁",
+            "제24장. 특별함의 목적", "제25장. 하나님의 정의正義", "제26장. 변환",
+            "제27장. 꿈의 치유", "제28장. 두려움의 해제", "제29장. 깨어남",
+            "제30장. 새로운 시작", "제31장. 마지막 비전", "<학생용 연습서>",
+            "서문", "1부", "1과~60과", "61과~90과", "91과~120과", "121과~150과",
+            "151과~180과", "181과~220과", "2부", "221과~290과", "291과~365과",
+            "<교사용 지침서>", "<용어 해설>", "기적수업 부록", "<심리치료>",
+            "<기도의 노래>", "역자 후기 외 기타 사항", "기적수업 전체 목차"
+        ];
+
+        const tocListElement = document.getElementById('toc-list');
+        
+        // 읽기 모달 DOM
+        const readModalOverlay = document.getElementById('read-modal-overlay');
+        const readModalTitle = document.getElementById('read-modal-title');
+        const readNoteTextarea = document.getElementById('read-note-textarea');
+        const readAudioPlayer = document.getElementById('read-audio-player');
+        const closeReadModalBtn = document.getElementById('close-read-modal');
+        
+        // 편집 모달 DOM
+        const openEditModalBtn = document.getElementById('open-edit-modal-btn');
+        const editModalOverlay = document.getElementById('edit-modal-overlay');
+        const closeEditModalBtn = document.getElementById('close-edit-modal');
+        const editChapterSelect = document.getElementById('edit-chapter-select');
+        const editAudioUrlInput = document.getElementById('edit-audio-url-input');
+        const editAudioFileInput = document.getElementById('edit-audio-file-input');
+        const editNoteTextarea = document.getElementById('edit-note-textarea');
+        const saveBtn = document.getElementById('save-btn');
+
+        let currentBlobUrl = null;
+        let playingChapterId = null;
+        let editableChapters = []; // 편집 모달의 셀렉트 박스에 들어갈 전체 목록
+
+        // IndexedDB 초기화
+        let db;
+        const dbReq = indexedDB.open("ACIM_Audio_DB", 1);
+        dbReq.onupgradeneeded = (e) => {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains("audioFiles")) {
+                db.createObjectStore("audioFiles");
+            }
+        };
+        dbReq.onsuccess = (e) => { db = e.target.result; };
+
+        // 1. 메인 목차 렌더링 및 편집 리스트(editableChapters) 생성
+        tocData.forEach((title, index) => {
+            const li = document.createElement('li');
+            const chapterId = `chapter_${index}_${title}`;
+            const rangeMatch = title.match(/(\d+)과\s*~\s*(\d+)과/);
+
+            if (title === "<교과서>" || title === "<학생용 연습서>" || title === "1부" || title === "2부") {
+                // 대분류
+                li.className = 'toc-item toc-header';
+                li.innerHTML = `<div class="toc-title">${title}</div>`;
+            } 
+            else if (rangeMatch) {
+                // 아코디언 폴더
+                li.className = 'toc-item folder-item';
+                const startNum = parseInt(rangeMatch[1], 10);
+                const endNum = parseInt(rangeMatch[2], 10);
+                
+                const titleContainer = document.createElement('div');
+                titleContainer.className = 'folder-title-container';
+                titleContainer.innerHTML = `<div class="folder-title">${title}</div><span style="color:#A0AEC0; font-size:12px;">▼</span>`;
+                
+                const subListUl = document.createElement('ul');
+                subListUl.className = 'sub-list';
+
+                for(let i = startNum; i <= endNum; i++) {
+                    const lessonTitle = `제${i}과`;
+                    const lessonId = `lesson_${i}`;
+
+                    // 편집 리스트에 과 추가
+                    editableChapters.push({ id: lessonId, title: lessonTitle });
+
+                    const subLi = document.createElement('li');
+                    subLi.className = 'toc-item';
+                    subLi.innerHTML = `
+                        <div class="toc-title">${lessonTitle}</div>
+                        <button class="play-btn" data-id="${lessonId}" title="오디오 바로 재생">▶</button>
+                    `;
+                    subLi.querySelector('.toc-title').addEventListener('click', () => openReadModal(lessonTitle, lessonId));
+                    subLi.querySelector('.play-btn').addEventListener('click', (e) => toggleInlineAudio(lessonId));
+                    subListUl.appendChild(subLi);
+                }
+
+                titleContainer.addEventListener('click', () => {
+                    subListUl.classList.toggle('open');
+                    const arrow = titleContainer.querySelector('span');
+                    arrow.textContent = subListUl.classList.contains('open') ? '▲' : '▼';
+                });
+
+                li.appendChild(titleContainer);
+                li.appendChild(subListUl);
+            } 
+            else {
+                // 일반 항목
+                editableChapters.push({ id: chapterId, title: title });
+
+                li.className = 'toc-item';
+                li.innerHTML = `
+                    <div class="toc-title">${title}</div>
+                    <button class="play-btn" data-id="${chapterId}" title="오디오 바로 재생">▶</button>
+                `;
+                li.querySelector('.toc-title').addEventListener('click', () => openReadModal(title, chapterId));
+                li.querySelector('.play-btn').addEventListener('click', (e) => toggleInlineAudio(chapterId));
+            }
+            tocListElement.appendChild(li);
+        });
+
+        // 2. 편집 모달의 셀렉트 박스 채우기
+        editableChapters.forEach(chapter => {
+            const option = document.createElement('option');
+            option.value = chapter.id;
+            option.textContent = chapter.title;
+            editChapterSelect.appendChild(option);
+        });
+
+        // 3. 읽기 전용 모달 열기
+        async function openReadModal(title, id) {
+            readModalTitle.textContent = title;
+            readNoteTextarea.value = localStorage.getItem(id + "_note") || "";
+            
+            const savedUrl = localStorage.getItem(id + "_url") || "";
+            if (playingChapterId !== id) {
+                await loadAudio(id, savedUrl);
+            }
+            readModalOverlay.style.display = 'flex';
+        }
+
+        // 4. 편집 전용 모달 열기 및 데이터 로드
+        openEditModalBtn.addEventListener('click', () => {
+            loadEditDataForSelectedChapter();
+            editModalOverlay.style.display = 'flex';
+        });
+
+        editChapterSelect.addEventListener('change', () => {
+            loadEditDataForSelectedChapter();
+        });
+
+        function loadEditDataForSelectedChapter() {
+            const selectedId = editChapterSelect.value;
+            editNoteTextarea.value = localStorage.getItem(selectedId + "_note") || "";
+            editAudioUrlInput.value = localStorage.getItem(selectedId + "_url") || "";
+            editAudioFileInput.value = ""; // 파일 입력창은 보안상 JS로 파일명을 채울 수 없어 초기화합니다.
+        }
+
+        // 5. 오디오 로드 공통 로직 (읽기 모달, 인라인 플레이어용)
+        async function loadAudio(id, url) {
+            if (currentBlobUrl) {
+                URL.revokeObjectURL(currentBlobUrl);
+                currentBlobUrl = null;
+            }
+
+            const fileBlob = await getAudioFromFileDB(id);
+            if (fileBlob) {
+                currentBlobUrl = URL.createObjectURL(fileBlob);
+                readAudioPlayer.src = currentBlobUrl;
+            } else if (url) {
+                readAudioPlayer.src = url;
+            } else {
+                readAudioPlayer.src = "";
+            }
+            playingChapterId = id;
+        }
+
+        // 6. 리스트 우측 인라인 플레이 버튼 로직
+        async function toggleInlineAudio(chapterId) {
+            if (playingChapterId === chapterId && !readAudioPlayer.paused) {
+                readAudioPlayer.pause();
+                return;
+            }
+
+            if (playingChapterId !== chapterId) {
+                const savedUrl = localStorage.getItem(chapterId + "_url") || "";
+                const fileBlob = await getAudioFromFileDB(chapterId);
+                
+                if (!fileBlob && !savedUrl) {
+                    alert("이 장에 등록된 오디오가 없습니다. 상단의 [편집] 버튼을 눌러 오디오를 먼저 등록해주세요.");
+                    return;
+                }
+                await loadAudio(chapterId, savedUrl);
+            }
+            readAudioPlayer.play().catch(() => alert("오디오 재생 실패. 올바른 파일이나 URL인지 확인해주세요."));
+        }
+
+        // 플레이 상태 아이콘 동기화
+        function updatePlayButtons() {
+            document.querySelectorAll('.play-btn').forEach(btn => btn.textContent = '▶');
+            if (playingChapterId && !readAudioPlayer.paused) {
+                document.querySelectorAll(`.play-btn[data-id="${playingChapterId}"]`).forEach(activeBtn => {
+                    activeBtn.textContent = '⏸';
+                });
+            }
+        }
+        readAudioPlayer.addEventListener('play', updatePlayButtons);
+        readAudioPlayer.addEventListener('pause', updatePlayButtons);
+
+        // 7. 데이터 저장 (편집 모달에서 저장 시)
+        saveBtn.addEventListener('click', async () => {
+            const selectedId = editChapterSelect.value;
+            
+            // 텍스트와 URL 로컬 스토리지에 저장
+            localStorage.setItem(selectedId + "_note", editNoteTextarea.value);
+            localStorage.setItem(selectedId + "_url", editAudioUrlInput.value.trim());
+
+            // 파일이 첨부되어 있다면 IndexedDB에 저장
+            const file = editAudioFileInput.files[0];
+            if (file) {
+                await saveAudioToFileDB(selectedId, file);
+                
+                // 만약 현재 재생 중이던 챕터를 수정했다면 오디오 갱신을 위해 즉시 재로드
+                if (playingChapterId === selectedId) {
+                    await loadAudio(selectedId, editAudioUrlInput.value.trim());
+                }
+            } else if (playingChapterId === selectedId && editAudioUrlInput.value.trim() !== "") {
+                // 파일은 없는데 URL만 수정한 경우 재로드
+                await loadAudio(selectedId, editAudioUrlInput.value.trim());
+            }
+
+            showToast();
+        });
+
+        // 모달 닫기
+        closeReadModalBtn.addEventListener('click', () => readModalOverlay.style.display = 'none');
+        readModalOverlay.addEventListener('click', (e) => { if (e.target === readModalOverlay) readModalOverlay.style.display = 'none'; });
+        
+        closeEditModalBtn.addEventListener('click', () => editModalOverlay.style.display = 'none');
+        editModalOverlay.addEventListener('click', (e) => { if (e.target === editModalOverlay) editModalOverlay.style.display = 'none'; });
+
+        // IndexedDB 유틸리티
+        function saveAudioToFileDB(id, file) {
+            return new Promise((resolve) => {
+                if (!db) return resolve();
+                const tx = db.transaction("audioFiles", "readwrite");
+                const store = tx.objectStore("audioFiles");
+                store.put(file, id);
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        function getAudioFromFileDB(id) {
+            return new Promise((resolve) => {
+                if (!db) return resolve(null);
+                const tx = db.transaction("audioFiles", "readonly");
+                const store = tx.objectStore("audioFiles");
+                const req = store.get(id);
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => resolve(null);
+            });
+        }
+
+        // 토스트 알림
+        function showToast() {
+            const toast = document.getElementById("toast");
+            toast.className = "toast show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2500);
+        }
+    </script>
+</body>
+</html>
