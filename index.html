@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>오디오북:기적수업</title>
     <!-- 프리텐다드(Pretendard) 웹폰트 로드 -->
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
@@ -440,7 +440,7 @@
             border: 1px solid var(--border-color);
             border-radius: 10px;
             resize: vertical;
-            font-size: 16px;
+            font-size: 16px; /* 모바일 자동 줌 방지를 위해 16px 유지 */
             line-height: 1.6;
             font-family: inherit;
             box-sizing: border-box;
@@ -509,7 +509,7 @@
             padding: 10px 12px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 16px; /* 14px -> 16px로 수정하여 모바일 확대 방지 */
             box-sizing: border-box;
             outline: none;
         }
@@ -529,7 +529,7 @@
 
         .dropdown-option {
             padding: 10px 14px;
-            font-size: 14px;
+            font-size: 15px; /* 옵션 글자 크기도 15px로 미세 상향 */
             cursor: pointer;
             color: #2D3748;
             transition: background 0.15s;
