@@ -242,29 +242,50 @@
             padding-bottom: calc(15px + env(safe-area-inset-bottom));
             display: flex;
             justify-content: center;
-            gap: 15px;
+            align-items: center;
+            gap: 8px;
             box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
             z-index: 500;
         }
 
-        .bottom-edit-bar button {
-            flex: 1;
-            max-width: 250px;
-            padding: 14px;
-            font-size: 16px;
+        .bottom-edit-bar button, .bottom-edit-bar label {
+            height: 46px; /* 높이를 고정하여 완벽하게 일치시킴 */
+            font-size: 14px;
             border-radius: 10px;
             border: none;
             font-weight: 600;
             cursor: pointer;
             color: white;
+            text-align: center;
             transition: opacity 0.2s, transform 0.1s;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
         }
         
-        .bottom-edit-bar button:active { transform: scale(0.98); }
-        .bottom-edit-bar button:hover { opacity: 0.9; }
+        .bottom-edit-bar button:active, .bottom-edit-bar label:active { transform: scale(0.98); }
+        .bottom-edit-bar button:hover, .bottom-edit-bar label:hover { opacity: 0.9; }
+
+        /* 편집 버튼은 넓게 유지 */
+        .btn-general-edit, .btn-wb-edit {
+            flex: 2;
+            max-width: 200px;
+        }
+
+        /* 백업 및 복원 버튼은 작게 유지 */
+        .btn-backup, .btn-restore {
+            flex: 1;
+            max-width: 85px;
+            font-size: 13px;
+            padding: 0 6px; /* 상하 패딩 제거하고 height로 높이 제어 */
+        }
 
         .btn-general-edit { background-color: #38A169; } 
         .btn-wb-edit { background-color: var(--wb-color); }
+        .btn-backup { background-color: #3182CE; }
+        .btn-restore { background-color: #DD6B20; }
 
         .modal-overlay {
             display: none;
@@ -315,14 +336,6 @@
             justify-content: space-between;
             align-items: center;
             padding-bottom: 10px;
-        }
-        
-        .modal:not(.fullscreen-ebook) .modal-header {
-            border-bottom: 2px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            background: var(--modal-bg);
-            z-index: 10;
         }
 
         .modal-title {
@@ -440,10 +453,27 @@
             border: 1px solid var(--border-color);
             border-radius: 10px;
             resize: vertical;
-            font-size: 16px; /* 모바일 자동 줌 방지를 위해 16px 유지 */
+            font-size: 16px;
             line-height: 1.6;
             font-family: inherit;
             box-sizing: border-box;
+        }
+
+        .fullscreen-edit-body {
+            padding: 25px;
+            overflow-y: auto;
+            flex-grow: 1;
+            background-color: #FAFCFF;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-sizing: border-box;
+        }
+
+        .fullscreen-edit-body textarea {
+            flex-grow: 1;
+            height: auto;
+            min-height: 250px;
         }
 
         textarea:focus {
@@ -457,7 +487,6 @@
             box-shadow: 0 0 0 3px rgba(128, 90, 213, 0.2);
         }
 
-        /* 🌟 커스텀 드롭다운 스타일 */
         .custom-dropdown {
             position: relative;
             width: 100%;
@@ -509,7 +538,7 @@
             padding: 10px 12px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            font-size: 16px; /* 14px -> 16px로 수정하여 모바일 확대 방지 */
+            font-size: 16px;
             box-sizing: border-box;
             outline: none;
         }
@@ -529,7 +558,7 @@
 
         .dropdown-option {
             padding: 10px 14px;
-            font-size: 15px; /* 옵션 글자 크기도 15px로 미세 상향 */
+            font-size: 15px;
             cursor: pointer;
             color: #2D3748;
             transition: background 0.15s;
@@ -550,6 +579,10 @@
             display: flex;
             justify-content: flex-end;
             gap: 10px;
+            padding: 15px 25px;
+            background: var(--modal-bg);
+            border-top: 1px solid var(--border-color);
+            z-index: 10;
         }
 
         .btn {
@@ -633,8 +666,11 @@
 
     <!-- 하단 고정 편집 바 -->
     <div class="bottom-edit-bar">
-        <button id="open-general-edit-btn" class="btn-general-edit">✏️ 일반 편집</button>
-        <button id="open-wb-edit-btn" class="btn-wb-edit">📘 연습서 편집</button>
+        <button id="open-general-edit-btn" class="btn-general-edit">일반편집</button>
+        <button id="open-wb-edit-btn" class="btn-wb-edit">연습서편집</button>
+        <button id="backup-btn" class="btn-backup">백업</button>
+        <label for="restore-file-input" class="btn-restore">복원</label>
+        <input type="file" id="restore-file-input" accept=".json" style="display: none;">
     </div>
 
     <!-- 읽기 전용 이북(eBook) 모달 -->
@@ -669,25 +705,27 @@
 
     <!-- 일반(교과서 등) 편집 모달 -->
     <div class="modal-overlay" id="edit-modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title" style="color: #38A169;">✏️ 일반 노트 편집</h2>
-                <button class="close-btn" id="close-edit-modal">&times;</button>
-            </div>
-            
-            <div>
-                <label class="edit-label" style="display:block; margin-bottom:5px;">📖 편집할 목차 선택 (교과서 및 부록)</label>
-                <div id="custom-dropdown-general" class="custom-dropdown">
-                    <div class="dropdown-toggle" id="general-dropdown-toggle">선택하세요</div>
-                    <div class="dropdown-menu" id="general-dropdown-menu">
-                        <input type="text" class="dropdown-search" id="general-dropdown-search" placeholder="🔍 목차 검색...">
-                        <ul class="dropdown-options-container" id="general-dropdown-options"></ul>
-                    </div>
+        <div class="modal fullscreen-ebook">
+            <div class="sticky-header-container">
+                <div class="modal-header">
+                    <h2 class="modal-title" style="color: #38A169;">✏️ 일반 노트 편집</h2>
+                    <button class="close-btn" id="close-edit-modal">&times;</button>
                 </div>
             </div>
+            <div class="fullscreen-edit-body">
+                <div>
+                    <label class="edit-label" style="display:block; margin-bottom:5px;">📖 편집할 목차 선택 (교과서 및 부록)</label>
+                    <div id="custom-dropdown-general" class="custom-dropdown">
+                        <div class="dropdown-toggle" id="general-dropdown-toggle">선택하세요</div>
+                        <div class="dropdown-menu" id="general-dropdown-menu">
+                            <input type="text" class="dropdown-search" id="general-dropdown-search" placeholder="🔍 목차 검색...">
+                            <ul class="dropdown-options-container" id="general-dropdown-options"></ul>
+                        </div>
+                    </div>
+                </div>
 
-            <textarea id="edit-note-textarea" placeholder="여기에 묵상 내용이나 노트를 작성하세요..."></textarea>
-            
+                <textarea id="edit-note-textarea" placeholder="여기에 묵상 내용이나 노트를 작성하세요..."></textarea>
+            </div>
             <div class="modal-footer">
                 <button class="btn btn-save" id="save-btn">저장하기</button>
             </div>
@@ -696,53 +734,55 @@
 
     <!-- 연습서 전용 편집 모달 -->
     <div class="modal-overlay" id="wb-edit-modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title" style="color: var(--wb-color);">📘 연습서 노트 편집</h2>
-                <button class="close-btn" id="close-wb-edit-modal">&times;</button>
-            </div>
-            
-            <div>
-                <label class="edit-label" style="display:block; margin-bottom:5px;">📖 편집할 연습서 선택</label>
-                <div id="custom-dropdown-wb" class="custom-dropdown">
-                    <div class="dropdown-toggle" id="wb-dropdown-toggle">선택하세요</div>
-                    <div class="dropdown-menu" id="wb-dropdown-menu">
-                        <input type="text" class="dropdown-search" id="wb-dropdown-search" placeholder="🔍 연습서 검색...">
-                        <ul class="dropdown-options-container" id="wb-dropdown-options"></ul>
-                    </div>
+        <div class="modal fullscreen-ebook">
+            <div class="sticky-header-container">
+                <div class="modal-header">
+                    <h2 class="modal-title" style="color: var(--wb-color);">📘 연습서 노트 편집</h2>
+                    <button class="close-btn" id="close-wb-edit-modal">&times;</button>
                 </div>
             </div>
-            
-            <!-- 관련 교과서 연결 영역 (연습서 전용) -->
-            <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
-                <label class="edit-label" style="display:block; margin-bottom:10px;">🔗 관련 교과서 연결 (최대 3개)</label>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <div id="custom-dropdown-rel1" class="custom-dropdown">
-                        <div class="dropdown-toggle" id="rel1-dropdown-toggle">- 관련 교과서 선택 안함 -</div>
-                        <div class="dropdown-menu" id="rel1-dropdown-menu">
-                            <input type="text" class="dropdown-search" id="rel1-dropdown-search" placeholder="🔍 교과서 검색...">
-                            <ul class="dropdown-options-container" id="rel1-dropdown-options"></ul>
-                        </div>
-                    </div>
-                    <div id="custom-dropdown-rel2" class="custom-dropdown">
-                        <div class="dropdown-toggle" id="rel2-dropdown-toggle">- 관련 교과서 선택 안함 -</div>
-                        <div class="dropdown-menu" id="rel2-dropdown-menu">
-                            <input type="text" class="dropdown-search" id="rel2-dropdown-search" placeholder="🔍 교과서 검색...">
-                            <ul class="dropdown-options-container" id="rel2-dropdown-options"></ul>
-                        </div>
-                    </div>
-                    <div id="custom-dropdown-rel3" class="custom-dropdown">
-                        <div class="dropdown-toggle" id="rel3-dropdown-toggle">- 관련 교과서 선택 안함 -</div>
-                        <div class="dropdown-menu" id="rel3-dropdown-menu">
-                            <input type="text" class="dropdown-search" id="rel3-dropdown-search" placeholder="🔍 교과서 검색...">
-                            <ul class="dropdown-options-container" id="rel3-dropdown-options"></ul>
+            <div class="fullscreen-edit-body">
+                <div>
+                    <label class="edit-label" style="display:block; margin-bottom:5px;">📖 편집할 연습서 선택</label>
+                    <div id="custom-dropdown-wb" class="custom-dropdown">
+                        <div class="dropdown-toggle" id="wb-dropdown-toggle">선택하세요</div>
+                        <div class="dropdown-menu" id="wb-dropdown-menu">
+                            <input type="text" class="dropdown-search" id="wb-dropdown-search" placeholder="🔍 연습서 검색...">
+                            <ul class="dropdown-options-container" id="wb-dropdown-options"></ul>
                         </div>
                     </div>
                 </div>
-            </div>
+                
+                <!-- 관련 교과서 연결 영역 (연습서 전용) -->
+                <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
+                    <label class="edit-label" style="display:block; margin-bottom:10px;">🔗 관련 교과서 연결 (최대 3개)</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div id="custom-dropdown-rel1" class="custom-dropdown">
+                            <div class="dropdown-toggle" id="rel1-dropdown-toggle">- 관련 교과서 선택 안함 -</div>
+                            <div class="dropdown-menu" id="rel1-dropdown-menu">
+                                <input type="text" class="dropdown-search" id="rel1-dropdown-search" placeholder="🔍 교과서 검색...">
+                                <ul class="dropdown-options-container" id="rel1-dropdown-options"></ul>
+                            </div>
+                        </div>
+                        <div id="custom-dropdown-rel2" class="custom-dropdown">
+                            <div class="dropdown-toggle" id="rel2-dropdown-toggle">- 관련 교과서 선택 안함 -</div>
+                            <div class="dropdown-menu" id="rel2-dropdown-menu">
+                                <input type="text" class="dropdown-search" id="rel2-dropdown-search" placeholder="🔍 교과서 검색...">
+                                <ul class="dropdown-options-container" id="rel2-dropdown-options"></ul>
+                            </div>
+                        </div>
+                        <div id="custom-dropdown-rel3" class="custom-dropdown">
+                            <div class="dropdown-toggle" id="rel3-dropdown-toggle">- 관련 교과서 선택 안함 -</div>
+                            <div class="dropdown-menu" id="rel3-dropdown-menu">
+                                <input type="text" class="dropdown-search" id="rel3-dropdown-search" placeholder="🔍 교과서 검색...">
+                                <ul class="dropdown-options-container" id="rel3-dropdown-options"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <textarea id="wb-note-textarea" class="wb-textarea" placeholder="여기에 묵상 내용이나 노트를 작성하세요..."></textarea>
-            
+                <textarea id="wb-note-textarea" class="wb-textarea" placeholder="여기에 묵상 내용이나 노트를 작성하세요..."></textarea>
+            </div>
             <div class="modal-footer">
                 <button class="btn btn-save-wb" id="save-wb-btn">저장하기</button>
             </div>
@@ -1066,7 +1106,7 @@
                     {
                         title: "심리치료",
                         sublist: [
-                            "서문 (목적, 과정, 실행 - 기적수업 원리의 확장)",
+                            "서문",
                             "1. 심리치료의 목적",
                             {
                                 title: "2. 심리치료의 과정",
@@ -1086,8 +1126,8 @@
                     {
                         title: "기도의 노래",
                         sublist: [
-                            "서문 (기도, 용서, 치유 - 기적수업 원리의 확장)",
-                            {
+                            "서문",
+                             {
                                 title: "1. 기도",
                                 sublist: [
                                     "서문",
@@ -1381,7 +1421,6 @@
             });
         });
 
-        // 🌟 커스텀 드롭다운 구현 로직
         function setupCustomDropdown(containerId, items, onSelect, defaultText = "선택하세요") {
             const container = document.getElementById(containerId);
             const toggle = container.querySelector('.dropdown-toggle');
@@ -1415,7 +1454,6 @@
 
             toggle.addEventListener('click', (e) => {
                 e.stopPropagation();
-                // 다른 열린 드롭다운 닫기
                 document.querySelectorAll('.dropdown-menu.open').forEach(m => {
                     if (m !== menu) m.classList.remove('open');
                 });
@@ -1445,12 +1483,10 @@
             };
         }
 
-        // 외부 클릭 시 모든 커스텀 드롭다운 닫기
         window.addEventListener('click', () => {
             document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open'));
         });
 
-        // 일반 편집 드롭다운 초기화
         let generalSelectedId = generalChapters.length > 0 ? generalChapters[0].id : "";
         const generalDropdown = setupCustomDropdown(
             'custom-dropdown-general',
@@ -1476,7 +1512,6 @@
             document.getElementById('edit-modal-overlay').style.display = 'none';
         });
 
-        // 연습서 편집 드롭다운 초기화
         let wbSelectedId = workbookChapters.length > 0 ? workbookChapters[0].id : "";
         const wbDropdown = setupCustomDropdown(
             'custom-dropdown-wb',
@@ -1639,7 +1674,7 @@
             if (!generalSelectedId) return;
             const note = document.getElementById('edit-note-textarea').value;
             localStorage.setItem(generalSelectedId + "_note", note);
-            showToast();
+            showToast("성공적으로 저장되었습니다.");
         });
 
         document.getElementById('save-wb-btn').addEventListener('click', () => {
@@ -1651,7 +1686,67 @@
             localStorage.setItem(wbSelectedId + "_rel2", rel2Dropdown.getValue());
             localStorage.setItem(wbSelectedId + "_rel3", rel3Dropdown.getValue());
 
-            showToast();
+            showToast("성공적으로 저장되었습니다.");
+        });
+
+        document.getElementById('backup-btn').addEventListener('click', () => {
+            const backupData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('audio_')) {
+                    backupData[key] = localStorage.getItem(key);
+                }
+            }
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            
+            const date = new Date();
+            const dateStr = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+            
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `기적수업_오디오북_백업_${dateStr}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            
+            showToast("백업 파일이 다운로드되었습니다.");
+        });
+
+        document.getElementById('restore-file-input').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const restoredData = JSON.parse(e.target.result);
+                    if (typeof restoredData !== 'object' || restoredData === null) {
+                        throw new Error("올바른 백업 파일 형식이 아닙니다.");
+                    }
+
+                    if (confirm("기존에 저장된 모든 노트와 연결 정보가 백업 파일의 내용으로 덮어씌워집니다. 진행하시겠습니까?")) {
+                        const keysToRemove = [];
+                        for (let i = 0; i < localStorage.length; i++) {
+                            const key = localStorage.key(i);
+                            if (key.startsWith('audio_')) keysToRemove.push(key);
+                        }
+                        keysToRemove.forEach(k => localStorage.removeItem(k));
+
+                        for (const [key, value] of Object.entries(restoredData)) {
+                            localStorage.setItem(key, value);
+                        }
+
+                        showToast("성공적으로 복원되었습니다.");
+                        setTimeout(() => location.reload(), 1000);
+                    }
+                } catch (err) {
+                    alert("파일을 읽는 중 오류가 발생했습니다: " + err.message);
+                } finally {
+                    event.target.value = "";
+                }
+            };
+            reader.readAsText(file);
         });
 
         document.getElementById('close-read-modal').addEventListener('click', () => readModalOverlay.style.display = 'none');
@@ -1661,8 +1756,9 @@
             if (e.target === document.getElementById('wb-edit-modal-overlay')) document.getElementById('wb-edit-modal-overlay').style.display = 'none';
         });
 
-        function showToast() {
+        function showToast(message) {
             const toast = document.getElementById("toast");
+            toast.textContent = message;
             toast.className = "toast show";
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2500);
         }
