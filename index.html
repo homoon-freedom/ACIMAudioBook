@@ -1291,7 +1291,70 @@
                 subListUl.className = 'sub-list';
 
                 for(let i = startNum; i <= endNum; i++) {
-                    const lessonTitle = `제${i}과`;
+                    // 특수 하위 목차 동적 추가를 위한 아이템 배열
+                    let preItems = [];
+
+                    // 연습서 1부
+                    if (title === "41~60과" && i === 51) preItems.push("복습 1 서문");
+                    if (title === "81~100과" && i === 81) preItems.push("복습 2 서문");
+                    if (title === "101~120과" && i === 111) preItems.push("복습 3 서문");
+                    if (title === "141~160과" && i === 141) preItems.push("복습 4 서문");
+                    if (title === "161~180과" && i === 171) preItems.push("복습 5 서문");
+                    if (title === "181~200과" && i === 181) preItems.push("연습서 181~200 서문");
+                    if (title === "201~220과" && i === 201) preItems.push("복습 6 서문");
+                    
+                    // 연습서 2부
+                    if (title === "221~240과" && i === 221) {
+                        preItems.push("2부 서문");
+                        preItems.push("1. 용서란 무엇인가? (221~230과 주제)");
+                    }
+                    if (title === "221~240과" && i === 231) preItems.push("2. 구원이란 무엇인가? (231~240과 주제)");
+                    if (title === "241~260과" && i === 241) preItems.push("3. 세상이란 무엇인가? (241~250과 주제)");
+                    if (title === "241~260과" && i === 251) preItems.push("4. 죄란 무엇인가? (251~260과 주제)");
+                    if (title === "261~280과" && i === 261) preItems.push("5. 육체란 무엇인가? (261~270과 주제)");
+                    if (title === "261~280과" && i === 271) preItems.push("6. 그리스도란 무엇인가? (271~280과 주제)");
+                    if (title === "281~300과" && i === 281) preItems.push("7. 성령이란 무엇인가 (연습서281~290과)");
+                    if (title === "281~300과" && i === 291) preItems.push("8. 실재세상이란 무엇인가? (291~300과 주제)");
+                    if (title === "301~320과" && i === 301) preItems.push("9. 재림이란 무엇인가? (301~310과 주제)");
+                    if (title === "301~320과" && i === 311) preItems.push("10. 최후의 심판은 무엇인가? (311~320과 주제)");
+                    if (title === "321~340과" && i === 321) preItems.push("11. 창조물이란 무엇인가? (321~330과 주제)");
+                    if (title === "321~340과" && i === 331) preItems.push("12. 에고란 무엇인가? (331~340과 주제)");
+                    if (title === "341~360과" && i === 341) preItems.push("13. 기적이란 무엇인가? (341~350과 주제)");
+                    if (title === "341~360과" && i === 351) preItems.push("14. 나는 무엇인가? (351~360과 주제)");
+                    if (title === "361~365과" && i === 361) preItems.push("마지막과 서문");
+
+                    // 삽입할 항목이 있다면 생성
+                    preItems.forEach(itemTitle => {
+                        const itemId = `audio_${getNextIndex()}`;
+                        editableChapters.push({ id: itemId, title: itemTitle, audioFile: `${itemId}.mp3`, section: sectionName });
+                        
+                        const preLi = document.createElement('li');
+                        preLi.className = 'toc-item';
+                        preLi.style.paddingLeft = "30px";
+                        preLi.innerHTML = `
+                            <div class="toc-title" style="font-weight: 600; color: #4A5568;">${itemTitle}</div>
+                            <div class="btn-group-right">
+                                <button class="play-btn" data-id="${itemId}" title="재생 / 일시정지">▶</button>
+                                <button class="reset-btn" data-id="${itemId}" title="처음부터 다시 듣기">↺</button>
+                            </div>
+                        `;
+                        preLi.querySelector('.toc-title').addEventListener('click', () => openReadModal(itemTitle, itemId));
+                        preLi.querySelector('.play-btn').addEventListener('click', () => toggleInlineAudio(itemId));
+                        preLi.querySelector('.reset-btn').addEventListener('click', () => resetInlineAudio(itemId));
+                        subListUl.appendChild(preLi);
+                    });
+
+                    // 362~365과는 개별 목차에서 생략
+                    if (i >= 362 && i <= 365) {
+                        continue;
+                    }
+
+                    // 361과 명칭 수정
+                    let lessonTitle = `제${i}과`;
+                    if (i === 361) {
+                        lessonTitle = "제361과~365과";
+                    }
+
                     const lessonId = `audio_${getNextIndex()}`;
                     editableChapters.push({ id: lessonId, title: lessonTitle, audioFile: `${lessonId}.mp3`, section: sectionName });
 
