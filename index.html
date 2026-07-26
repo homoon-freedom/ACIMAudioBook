@@ -1291,10 +1291,8 @@
                 subListUl.className = 'sub-list';
 
                 for(let i = startNum; i <= endNum; i++) {
-                    // 특수 하위 목차 동적 추가를 위한 아이템 배열
                     let preItems = [];
 
-                    // 연습서 1부
                     if (title === "41~60과" && i === 51) preItems.push("복습 1 서문");
                     if (title === "81~100과" && i === 81) preItems.push("복습 2 서문");
                     if (title === "101~120과" && i === 111) preItems.push("복습 3 서문");
@@ -1303,7 +1301,6 @@
                     if (title === "181~200과" && i === 181) preItems.push("연습서 181~200 서문");
                     if (title === "201~220과" && i === 201) preItems.push("복습 6 서문");
                     
-                    // 연습서 2부
                     if (title === "221~240과" && i === 221) {
                         preItems.push("2부 서문");
                         preItems.push("1. 용서란 무엇인가? (221~230과 주제)");
@@ -1323,7 +1320,6 @@
                     if (title === "341~360과" && i === 351) preItems.push("14. 나는 무엇인가? (351~360과 주제)");
                     if (title === "361~365과" && i === 361) preItems.push("마지막과 서문");
 
-                    // 삽입할 항목이 있다면 생성
                     preItems.forEach(itemTitle => {
                         const itemId = `audio_${getNextIndex()}`;
                         editableChapters.push({ id: itemId, title: itemTitle, audioFile: `${itemId}.mp3`, section: sectionName });
@@ -1344,12 +1340,10 @@
                         subListUl.appendChild(preLi);
                     });
 
-                    // 362~365과는 개별 목차에서 생략
                     if (i >= 362 && i <= 365) {
                         continue;
                     }
 
-                    // 361과 명칭 수정
                     let lessonTitle = `제${i}과`;
                     if (i === 361) {
                         lessonTitle = "제361과~365과";
@@ -1471,7 +1465,6 @@
 
         buildTOC();
 
-        // 탭 메뉴 전환 이벤트 리스너
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1581,7 +1574,13 @@
             "연습서를 선택하세요"
         );
 
-        const relItemsWithNone = [{ id: "", title: "- 관련 교과서 선택 안함 -" }, ...textbookChapters];
+        // 관련 교과서 리스트에 연습서 2부 '맺음말' 추가하기
+        const wb2Epilogue = editableChapters.find(ch => ch.section === "연습서 2부" && ch.title === "맺음말");
+        const relatedOptions = [...textbookChapters];
+        if (wb2Epilogue) {
+            relatedOptions.push({ ...wb2Epilogue, title: "연습서 2부 맺음말" });
+        }
+        const relItemsWithNone = [{ id: "", title: "- 관련 교과서 선택 안함 -" }, ...relatedOptions];
 
         let rel1Id = "", rel2Id = "", rel3Id = "";
         const rel1Dropdown = setupCustomDropdown('custom-dropdown-rel1', relItemsWithNone, (id) => { rel1Id = id; }, "- 관련 교과서 선택 안함 -");
@@ -1647,12 +1646,15 @@
                 if (relatedIds.length > 0) {
                     relatedSection.style.display = 'block';
                     relatedIds.forEach(relId => {
-                        const ch = textbookChapters.find(c => c.id === relId) || generalChapters.find(c => c.id === relId);
+                        // textbookChapters 뿐만 아니라 editableChapters 전체에서 찾도록 수정하여 맺음말 등도 찾을 수 있게 반영
+                        const ch = editableChapters.find(c => c.id === relId);
                         if (ch) {
                             const div = document.createElement('div');
                             div.className = 'related-item';
+                            // 맺음말의 경우 리스트에서 잘 보이도록 타이틀 변환
+                            const displayTitle = (ch.section === "연습서 2부" && ch.title === "맺음말") ? "연습서 2부 맺음말" : ch.title;
                             div.innerHTML = `
-                                <span>${ch.title}</span>
+                                <span>${displayTitle}</span>
                                 <div class="btn-group-right">
                                     <button class="play-btn" data-id="${ch.id}" title="재생 / 일시정지">▶</button>
                                     <button class="reset-btn" data-id="${ch.id}" title="처음부터 다시 듣기">↺</button>
@@ -1762,7 +1764,6 @@
             showToast("성공적으로 저장되었습니다.");
         });
 
-        // Web Share API를 적용한 백업/공유 로직 (텍스트 제외)
         document.getElementById('backup-btn').addEventListener('click', async () => {
             const backupData = {};
             for (let i = 0; i < localStorage.length; i++) {
@@ -1777,13 +1778,10 @@
             const dateStr = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
             const fileName = `기적수업_오디오북_백업_${dateStr}.json`;
 
-            // 1. JSON 데이터를 File 객체로 변환
             const file = new File([jsonData], fileName, { type: 'application/json' });
 
-            // 2. 브라우저가 Web Share API를 지원하고, 파일 공유가 가능한지 확인
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
-                    // 스마트폰의 기본 공유 메뉴 호출 (text 속성 제거)
                     await navigator.share({
                         files: [file],
                         title: '기적수업 오디오북 백업'
@@ -1791,18 +1789,15 @@
                     showToast("공유가 완료되었습니다.");
                 } catch (error) {
                     console.log('공유 취소 또는 실패:', error);
-                    // 사용자가 창을 닫아 취소(AbortError)한 것이 아닌 실제 에러라면 일반 다운로드 실행
                     if (error.name !== 'AbortError') {
                         downloadBackup(jsonData, fileName);
                     }
                 }
             } else {
-                // 3. PC 브라우저 등 공유 API를 지원하지 않는 환경을 위한 다운로드 폴백(Fallback)
                 downloadBackup(jsonData, fileName);
             }
         });
 
-        // 기존 파일 다운로드 로직을 함수로 분리
         function downloadBackup(jsonData, fileName) {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(jsonData);
             const downloadAnchor = document.createElement('a');
