@@ -41,7 +41,7 @@
             border-radius: 0; 
             box-shadow: none; 
             padding: 20px;
-            padding-bottom: 120px; /* 기본 닫힘 상태이므로 여백을 기존처럼 최적화 */
+            padding-bottom: 120px; 
             box-sizing: border-box; 
         }
 
@@ -290,9 +290,7 @@
             transform: scale(1.05);
         }
 
-        /* ============== 플로팅 하단 메뉴 및 토글 스타일 ============== */
-        
-        /* 토글 버튼 (FAB - Floating Action Button) */
+        /* 플로팅 메뉴 버튼 및 하단 바 스타일 */
         .menu-fab {
             position: fixed;
             bottom: calc(20px + env(safe-area-inset-bottom));
@@ -318,17 +316,12 @@
             background-color: #235A96;
         }
 
-        .menu-fab:active {
-            transform: scale(0.95);
-        }
-
         .menu-fab.hidden {
             transform: scale(0) rotate(-45deg);
             opacity: 0;
             pointer-events: none;
         }
 
-        /* 둥둥 떠있는 하단 고정 바 2줄 레이아웃 */
         .bottom-edit-bar {
             position: fixed;
             bottom: calc(20px + env(safe-area-inset-bottom));
@@ -348,7 +341,6 @@
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
         }
 
-        /* 기본 닫힌 상태 클래스 */
         .bottom-edit-bar.hidden {
             transform: translateY(calc(100% + 40px));
             opacity: 0;
@@ -390,8 +382,6 @@
             background-color: #EDF2F7;
             color: #4A5568;
         }
-
-        /* ========================================================= */
 
         .bottom-bar-row {
             display: flex;
@@ -565,32 +555,97 @@
             color: #4A5568;
         }
 
-        .audio-section {
-            background: #F8FAFC;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 15px;
+        /* 커스텀 오디오 플레이어 스타일 */
+        .custom-audio-player {
+            background: #E2E8F0;
+            border-radius: 12px;
+            padding: 12px 16px;
             display: flex;
             flex-direction: column;
             gap: 10px;
+            margin-top: 5px;
         }
 
-        .fullscreen-ebook .audio-section {
-            padding: 5px 0 0 0;
+        .audio-controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .audio-ctrl-btn {
+            background: #FFFFFF;
             border: none;
-            background: transparent;
-        }
-
-        .audio-section label, .edit-label {
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 14px;
             font-weight: 600;
-            color: #718096;
+            color: #2D3748;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            transition: background 0.15s, transform 0.1s;
         }
 
-        audio {
-            width: 100%;
+        .audio-ctrl-btn:hover {
+            background: #EDF2F7;
+            transform: scale(1.05);
+        }
+
+        .audio-ctrl-btn.main-play {
+            width: 44px;
             height: 44px;
-            margin-top: 5px;
+            font-size: 18px;
+            background: var(--primary-color);
+            color: white;
+        }
+        .audio-ctrl-btn.main-play:hover {
+            background: #235A96;
+        }
+
+        .audio-progress-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .audio-time {
+            font-size: 13px;
+            font-weight: 600;
+            color: #4A5568;
+            min-width: 42px;
+            text-align: center;
+        }
+
+        .audio-progress-container {
+            flex-grow: 1;
+            position: relative;
+            height: 6px;
+            background: #CBD5E0;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .audio-progress-bar {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 3px;
+            width: 0%;
+            pointer-events: none;
+        }
+
+        .audio-progress-slider {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            margin: 0;
         }
 
         textarea {
@@ -804,10 +859,10 @@
         </div>
     </div>
 
-    <!-- 메뉴 열기 톱니바퀴 버튼 (기본으로 화면에 노출됨) -->
+    <!-- 메뉴 열기 톱니바퀴 버튼 -->
     <button id="menu-fab" class="menu-fab" title="편집 메뉴 열기">⚙️</button>
 
-    <!-- 하단 고정 편집 바 (기본으로 hidden 클래스가 적용되어 숨겨져 있음) -->
+    <!-- 하단 고정 편집 바 (기본 닫힘) -->
     <div class="bottom-edit-bar hidden" id="bottom-edit-bar">
         <div class="bar-header">
             <span class="bar-title">편집 및 백업 도구</span>
@@ -819,12 +874,10 @@
             <button id="open-wb-edit-btn" class="btn-wb-edit">연습서편집</button>
         </div>
         <div class="bottom-bar-row">
-            <!-- 본문(노트) 백업/복원 -->
             <button id="backup-note-btn" class="btn-backup-note">본문백업</button>
             <label for="restore-note-input" class="btn-restore-note">본문복원</label>
             <input type="file" id="restore-note-input" accept=".json" style="display: none;">
             
-            <!-- 나의 정리 백업/복원 -->
             <button id="backup-summary-btn" class="btn-backup-summary">정리백업</button>
             <label for="restore-summary-input" class="btn-restore-summary">정리복원</label>
             <input type="file" id="restore-summary-input" accept=".json" style="display: none;">
@@ -839,15 +892,29 @@
                     <h2 class="modal-title" id="read-modal-title">제목</h2>
                     <button class="close-btn" id="close-read-modal" title="닫기">&times;</button>
                 </div>
-                <div class="audio-section">
-                    <audio id="read-audio-player" controls>
-                        <source src="" type="audio/mpeg">
-                        브라우저가 오디오 재생을 지원하지 않습니다.
-                    </audio>
+                
+                <!-- 커스텀 오디오 플레이어 -->
+                <div class="custom-audio-player">
+                    <audio id="read-audio-player" style="display: none;"></audio>
+                    <div class="audio-controls-row">
+                        <button class="audio-ctrl-btn" id="audio-backward-btn" title="10초 뒤로">⏪</button>
+                        <button class="audio-ctrl-btn" id="audio-play-btn" title="재생">▶</button>
+                        <button class="audio-ctrl-btn" id="audio-pause-btn" title="일시정지" style="display: none;">⏸</button>
+                        <button class="audio-ctrl-btn" id="audio-stop-btn" title="정지">⏹</button>
+                        <button class="audio-ctrl-btn" id="audio-forward-btn" title="10초 앞으로">⏩</button>
+                    </div>
+                    <div class="audio-progress-row">
+                        <span class="audio-time" id="audio-current-time">00:00</span>
+                        <div class="audio-progress-container">
+                            <div class="audio-progress-bar" id="audio-progress-bar"></div>
+                            <input type="range" class="audio-progress-slider" id="audio-progress-slider" value="0" min="0" max="100" step="0.1">
+                        </div>
+                        <span class="audio-time" id="audio-duration">00:00</span>
+                    </div>
                 </div>
             </div>
+
             <div class="ebook-body">
-                <!-- 읽기 모달 내부 탭 -->
                 <div class="modal-tab-menu">
                     <button class="modal-tab-btn active" data-target="read-tab-note">본문내용</button>
                     <button class="modal-tab-btn" data-target="read-tab-summary">나의 정리</button>
@@ -861,7 +928,6 @@
                     <div id="read-summary-content" class="ebook-text">작성된 정리가 없습니다.</div>
                 </div>
                 
-                <!-- 연습서일 때만 보이는 관련 교과서 목록 영역 -->
                 <div id="read-related-section" class="related-section" style="display: none;">
                     <h3>
                         📖 함께 읽으면 좋은 교과서
@@ -894,7 +960,6 @@
                     </div>
                 </div>
 
-                <!-- 일반 편집 모달 내부 탭 -->
                 <div class="modal-tab-menu">
                     <button class="modal-tab-btn active" data-target="edit-tab-note">본문내용</button>
                     <button class="modal-tab-btn" data-target="edit-tab-summary">나의 정리</button>
@@ -934,7 +999,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- 연습서 편집 모달 내부 탭 -->
                 <div class="modal-tab-menu">
                     <button class="modal-tab-btn active" data-target="wb-tab-note">본문내용</button>
                     <button class="modal-tab-btn" data-target="wb-tab-summary">나의 정리</button>
@@ -947,7 +1011,7 @@
                 <div id="wb-tab-summary" class="modal-tab-content">
                     <textarea id="wb-summary-textarea" class="wb-textarea" placeholder="여기에 나의 정리를 작성하세요... (백업/복원 시 분리되어 관리됩니다)"></textarea>
                 </div>
-                <!-- 관련 교과서 연결 영역 (연습서 전용) -->
+                
                 <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
                     <label class="edit-label" style="display:block; margin-bottom:10px;">🔗 관련 교과서 연결 (최대 3개)</label>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -1509,7 +1573,7 @@
                     if (title === "281~300과" && i === 291) preItems.push("8. 실재세상이란 무엇인가? (291~300과 주제)");
                     if (title === "301~320과" && i === 301) preItems.push("9. 재림이란 무엇인가? (301~310과 주제)");
                     if (title === "301~320과" && i === 311) preItems.push("10. 최후의 심판은 무엇인가? (311~320과 주제)");
-                    if (title === "321~340과" && i === 321) preItems.push("11. 창조물이이란 무엇인가? (321~330과 주제)");
+                    if (title === "321~340과" && i === 321) preItems.push("11. 창조물이란 무엇인가? (321~330과 주제)");
                     if (title === "321~340과" && i === 331) preItems.push("12. 에고란 무엇인가? (331~340과 주제)");
                     if (title === "341~360과" && i === 341) preItems.push("13. 기적이란 무엇인가? (341~350과 주제)");
                     if (title === "341~360과" && i === 351) preItems.push("14. 나는 무엇인가? (351~360과 주제)");
@@ -1671,7 +1735,7 @@
             });
         });
 
-        // 모달창 탭 전환 (본문내용 / 나의 정리)
+        // 모달창 탭 전환
         document.querySelectorAll('.modal-tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const parentBody = e.target.closest('.ebook-body') || e.target.closest('.fullscreen-edit-body');
@@ -1683,7 +1747,6 @@
             });
         });
 
-        // 모달창 탭 초기화 함수
         function resetModalTabs(containerSelector) {
             const container = document.querySelector(containerSelector);
             if (!container) return;
@@ -1841,9 +1904,80 @@
             document.getElementById('wb-edit-modal-overlay').style.display = 'none';
         });
 
+        // ------------------ 커스텀 오디오 제어 로직 ------------------
         const readModalOverlay = document.getElementById('read-modal-overlay');
         const readAudioPlayer = document.getElementById('read-audio-player');
+        const playBtnEl = document.getElementById('audio-play-btn');
+        const pauseBtnEl = document.getElementById('audio-pause-btn');
+        const stopBtnEl = document.getElementById('audio-stop-btn');
+        const backwardBtnEl = document.getElementById('audio-backward-btn');
+        const forwardBtnEl = document.getElementById('audio-forward-btn');
+        const currentTimeEl = document.getElementById('audio-current-time');
+        const durationEl = document.getElementById('audio-duration');
+        const progressBarEl = document.getElementById('audio-progress-bar');
+        const progressSliderEl = document.getElementById('audio-progress-slider');
         const returnAudioBtn = document.getElementById('return-audio-btn');
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "00:00";
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        playBtnEl.addEventListener('click', () => { readAudioPlayer.play(); });
+        pauseBtnEl.addEventListener('click', () => { readAudioPlayer.pause(); });
+        stopBtnEl.addEventListener('click', () => {
+            readAudioPlayer.pause();
+            readAudioPlayer.currentTime = 0;
+        });
+        backwardBtnEl.addEventListener('click', () => {
+            readAudioPlayer.currentTime = Math.max(0, readAudioPlayer.currentTime - 10);
+        });
+        forwardBtnEl.addEventListener('click', () => {
+            if (!isNaN(readAudioPlayer.duration)) {
+                readAudioPlayer.currentTime = Math.min(readAudioPlayer.duration, readAudioPlayer.currentTime + 10);
+            }
+        });
+
+        progressSliderEl.addEventListener('input', (e) => {
+            if (!isNaN(readAudioPlayer.duration)) {
+                const targetTime = (e.target.value / 100) * readAudioPlayer.duration;
+                readAudioPlayer.currentTime = targetTime;
+            }
+        });
+
+        readAudioPlayer.addEventListener('timeupdate', () => {
+            if (!isNaN(readAudioPlayer.duration) && readAudioPlayer.duration > 0) {
+                const percent = (readAudioPlayer.currentTime / readAudioPlayer.duration) * 100;
+                progressBarEl.style.width = `${percent}%`;
+                progressSliderEl.value = percent;
+                currentTimeEl.textContent = formatTime(readAudioPlayer.currentTime);
+                durationEl.textContent = formatTime(readAudioPlayer.duration);
+            }
+        });
+
+        readAudioPlayer.addEventListener('loadedmetadata', () => {
+            durationEl.textContent = formatTime(readAudioPlayer.duration);
+        });
+
+        readAudioPlayer.addEventListener('play', () => {
+            playBtnEl.style.display = 'none';
+            pauseBtnEl.style.display = 'flex';
+            updateInlinePlayButtons();
+        });
+
+        readAudioPlayer.addEventListener('pause', () => {
+            playBtnEl.style.display = 'flex';
+            pauseBtnEl.style.display = 'none';
+            updateInlinePlayButtons();
+        });
+
+        readAudioPlayer.addEventListener('ended', () => {
+            playBtnEl.style.display = 'flex';
+            pauseBtnEl.style.display = 'none';
+            updateInlinePlayButtons();
+        });
 
         async function openReadModal(title, id) {
             document.getElementById('read-modal-title').textContent = title;
@@ -1853,7 +1987,6 @@
             
             const formatNoteContent = (text) => {
                 let processedText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                
                 processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<span style="display: block; text-align: center; color: #38A169;">$1<span style="font-weight: 500; font-style: italic;">$2</span>$3</span>');
 
                 let lines = processedText.split('\n');
@@ -1866,7 +1999,6 @@
                     }
                     return line;
                 });
-                
                 return lines.join('<br>');
             };
 
@@ -1958,7 +2090,7 @@
                 readAudioPlayer.src = "";
             }
             playingChapterId = id;
-            updatePlayButtons();
+            updateInlinePlayButtons();
         }
 
         function toggleInlineAudio(chapterId) {
@@ -1994,14 +2126,12 @@
             });
         }
 
-        function updatePlayButtons() {
+        function updateInlinePlayButtons() {
             document.querySelectorAll('.play-btn').forEach(btn => btn.textContent = '▶');
             if (playingChapterId && !readAudioPlayer.paused) {
                 document.querySelectorAll(`.play-btn[data-id="${playingChapterId}"]`).forEach(btn => btn.textContent = '⏸');
             }
         }
-        readAudioPlayer.addEventListener('play', updatePlayButtons);
-        readAudioPlayer.addEventListener('pause', updatePlayButtons);
 
         document.getElementById('save-btn').addEventListener('click', () => {
             if (!generalSelectedId) return;
@@ -2082,7 +2212,6 @@
         document.getElementById('backup-note-btn').addEventListener('click', () => handleBackup(false));
         document.getElementById('backup-summary-btn').addEventListener('click', () => handleBackup(true));
 
-
         function handleRestore(event, isSummary) {
             const file = event.target.files[0];
             if (!file) return;
@@ -2131,9 +2260,16 @@
         document.getElementById('restore-note-input').addEventListener('change', (e) => handleRestore(e, false));
         document.getElementById('restore-summary-input').addEventListener('change', (e) => handleRestore(e, true));
 
-        document.getElementById('close-read-modal').addEventListener('click', () => readModalOverlay.style.display = 'none');
+        document.getElementById('close-read-modal').addEventListener('click', () => {
+            readAudioPlayer.pause();
+            readModalOverlay.style.display = 'none';
+        });
+
         window.addEventListener('click', (e) => {
-            if (e.target === readModalOverlay) readModalOverlay.style.display = 'none';
+            if (e.target === readModalOverlay) {
+                readAudioPlayer.pause();
+                readModalOverlay.style.display = 'none';
+            }
             if (e.target === document.getElementById('edit-modal-overlay')) document.getElementById('edit-modal-overlay').style.display = 'none';
             if (e.target === document.getElementById('wb-edit-modal-overlay')) document.getElementById('wb-edit-modal-overlay').style.display = 'none';
         });
@@ -2145,25 +2281,20 @@
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2500);
         }
 
-        // ==========================================
         // 하단 바 숨기기 / 보이기 토글 로직
-        // ==========================================
         const bottomEditBar = document.getElementById('bottom-edit-bar');
         const menuFab = document.getElementById('menu-fab');
         const closeBarBtn = document.getElementById('close-bar-btn');
 
-        // 바 내부의 X 버튼 클릭 시 바 숨기기 + 톱니바퀴 보이기
         closeBarBtn.addEventListener('click', () => {
             bottomEditBar.classList.add('hidden');
             menuFab.classList.remove('hidden');
         });
 
-        // 톱니바퀴 버튼 클릭 시 바 보이기 + 톱니바퀴 숨기기
         menuFab.addEventListener('click', () => {
             bottomEditBar.classList.remove('hidden');
             menuFab.classList.add('hidden');
         });
-        
     </script>
 </body>
 </html>
