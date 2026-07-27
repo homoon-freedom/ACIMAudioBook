@@ -41,7 +41,7 @@
             border-radius: 0; 
             box-shadow: none; 
             padding: 20px;
-            padding-bottom: 120px; /* 하단 바 높이 증가로 인한 여백 조정 */
+            padding-bottom: 120px; /* 기본 닫힘 상태이므로 여백을 기존처럼 최적화 */
             box-sizing: border-box; 
         }
 
@@ -290,24 +290,108 @@
             transform: scale(1.05);
         }
 
-        /* 하단 고정 바 2줄 레이아웃으로 변경 */
+        /* ============== 플로팅 하단 메뉴 및 토글 스타일 ============== */
+        
+        /* 토글 버튼 (FAB - Floating Action Button) */
+        .menu-fab {
+            position: fixed;
+            bottom: calc(20px + env(safe-area-inset-bottom));
+            right: 20px;
+            width: 52px;
+            height: 52px;
+            border-radius: 26px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+            z-index: 490;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 22px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        }
+
+        .menu-fab:hover {
+            transform: scale(1.05);
+            background-color: #235A96;
+        }
+
+        .menu-fab:active {
+            transform: scale(0.95);
+        }
+
+        .menu-fab.hidden {
+            transform: scale(0) rotate(-45deg);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* 둥둥 떠있는 하단 고정 바 2줄 레이아웃 */
         .bottom-edit-bar {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: calc(20px + env(safe-area-inset-bottom));
+            left: 20px;
+            right: 20px;
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border-top: 1px solid var(--border-color);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
             padding: 12px 15px;
-            padding-bottom: calc(12px + env(safe-area-inset-bottom));
             display: flex;
             flex-direction: column;
             gap: 8px;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
             z-index: 500;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
         }
+
+        /* 기본 닫힌 상태 클래스 */
+        .bottom-edit-bar.hidden {
+            transform: translateY(calc(100% + 40px));
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .bar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2px;
+            padding: 0 4px;
+        }
+
+        .bar-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #4A5568;
+        }
+
+        .bar-close-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #A0AEC0;
+            padding: 0;
+            line-height: 1;
+            height: 24px;
+            width: 24px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .bar-close-btn:hover {
+            background-color: #EDF2F7;
+            color: #4A5568;
+        }
+
+        /* ========================================================= */
 
         .bottom-bar-row {
             display: flex;
@@ -720,8 +804,16 @@
         </div>
     </div>
 
-    <!-- 하단 고정 편집 바 -->
-    <div class="bottom-edit-bar">
+    <!-- 메뉴 열기 톱니바퀴 버튼 (기본으로 화면에 노출됨) -->
+    <button id="menu-fab" class="menu-fab" title="편집 메뉴 열기">⚙️</button>
+
+    <!-- 하단 고정 편집 바 (기본으로 hidden 클래스가 적용되어 숨겨져 있음) -->
+    <div class="bottom-edit-bar hidden" id="bottom-edit-bar">
+        <div class="bar-header">
+            <span class="bar-title">편집 및 백업 도구</span>
+            <button class="bar-close-btn" id="close-bar-btn" title="메뉴 숨기기">✖</button>
+        </div>
+        
         <div class="bottom-bar-row">
             <button id="open-general-edit-btn" class="btn-general-edit">일반편집</button>
             <button id="open-wb-edit-btn" class="btn-wb-edit">연습서편집</button>
@@ -1417,7 +1509,7 @@
                     if (title === "281~300과" && i === 291) preItems.push("8. 실재세상이란 무엇인가? (291~300과 주제)");
                     if (title === "301~320과" && i === 301) preItems.push("9. 재림이란 무엇인가? (301~310과 주제)");
                     if (title === "301~320과" && i === 311) preItems.push("10. 최후의 심판은 무엇인가? (311~320과 주제)");
-                    if (title === "321~340과" && i === 321) preItems.push("11. 창조물이란 무엇인가? (321~330과 주제)");
+                    if (title === "321~340과" && i === 321) preItems.push("11. 창조물이이란 무엇인가? (321~330과 주제)");
                     if (title === "321~340과" && i === 331) preItems.push("12. 에고란 무엇인가? (331~340과 주제)");
                     if (title === "341~360과" && i === 341) preItems.push("13. 기적이란 무엇인가? (341~350과 주제)");
                     if (title === "341~360과" && i === 351) preItems.push("14. 나는 무엇인가? (351~360과 주제)");
@@ -1759,17 +1851,11 @@
             returnAudioBtn.style.display = 'none';
             resetModalTabs('#read-modal-overlay');
             
-            // 💡 최종 수정된 텍스트 포맷팅 함수 (닫는 쌍따옴표 종류 보강)
             const formatNoteContent = (text) => {
-                // 1. HTML 특수문자(<, >) 안전 변환
                 let processedText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 
-                // 2. 따옴표 내부 이탤릭 볼드체 지정 (왼쪽, 오른쪽, 일반 쌍따옴표 모두 인식되도록 괄호 안의 패턴 수정)
+                processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<span style="display: block; text-align: center; color: #38A169;">$1<span style="font-weight: 500; font-style: italic;">$2</span>$3</span>');
 
-processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<span style="display: block; text-align: center; color: #38A169;">$1<span style="font-weight: 500; font-style: italic;">$2</span>$3</span>');
-
-                
-                // 3. 줄 단위 분할 후 맨 앞 # 처리 (화면에서 # 기호 숨김)
                 let lines = processedText.split('\n');
                 lines = lines.map(line => {
                     let trimmed = line.trim();
@@ -1781,11 +1867,9 @@ processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<spa
                     return line;
                 });
                 
-                // 4. 합친 후 줄바꿈을 <br>로 변경
                 return lines.join('<br>');
             };
 
-            // 본문내용 로드
             const savedNote = localStorage.getItem(id + "_note");
             const noteEl = document.getElementById('read-note-content');
             if (savedNote && savedNote.trim() !== "") {
@@ -1796,7 +1880,6 @@ processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<spa
                 noteEl.style.color = "#A0AEC0";
             }
 
-            // 나의 정리 로드
             const savedSummary = localStorage.getItem(id + "_summary");
             const summaryEl = document.getElementById('read-summary-content');
             if (savedSummary && savedSummary.trim() !== "") {
@@ -1807,7 +1890,6 @@ processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<spa
                 summaryEl.style.color = "#A0AEC0";
             }
             
-            // 관련 교과서 목록 로드 (연습서의 경우)
             const relatedSection = document.getElementById('read-related-section');
             const relatedList = document.getElementById('related-list');
             relatedList.innerHTML = '';
@@ -1944,8 +2026,6 @@ processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<spa
             showToast("성공적으로 저장되었습니다.");
         });
 
-        // ------------------ 공유/백업 로직 분리 ------------------
-
         async function handleBackup(isSummary) {
             const backupData = {};
             for (let i = 0; i < localStorage.length; i++) {
@@ -1999,13 +2079,9 @@ processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<spa
             showToast("기기에서 공유를 지원하지 않아 파일로 다운로드되었습니다.");
         }
 
-        // 본문 백업 버튼
         document.getElementById('backup-note-btn').addEventListener('click', () => handleBackup(false));
-        // 나의 정리 백업 버튼
         document.getElementById('backup-summary-btn').addEventListener('click', () => handleBackup(true));
 
-
-        // ------------------ 복원 로직 분리 ------------------
 
         function handleRestore(event, isSummary) {
             const file = event.target.files[0];
@@ -2022,7 +2098,6 @@ processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<spa
                     const typeStr = isSummary ? "나의 정리" : "본문 노트와 연결 정보";
                     if (confirm(`기존에 저장된 ${typeStr}가 백업 파일의 내용으로 덮어씌워집니다. 진행하시겠습니까?`)) {
                         
-                        // 기존 데이터 삭제 (유형에 따라 선택적 삭제)
                         const keysToRemove = [];
                         for (let i = 0; i < localStorage.length; i++) {
                             const key = localStorage.key(i);
@@ -2037,7 +2112,6 @@ processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<spa
                         }
                         keysToRemove.forEach(k => localStorage.removeItem(k));
 
-                        // 백업 데이터 덮어쓰기
                         for (const [key, value] of Object.entries(restoredData)) {
                             localStorage.setItem(key, value);
                         }
@@ -2054,11 +2128,8 @@ processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<spa
             reader.readAsText(file);
         }
 
-        // 본문 복원 input
         document.getElementById('restore-note-input').addEventListener('change', (e) => handleRestore(e, false));
-        // 나의 정리 복원 input
         document.getElementById('restore-summary-input').addEventListener('change', (e) => handleRestore(e, true));
-
 
         document.getElementById('close-read-modal').addEventListener('click', () => readModalOverlay.style.display = 'none');
         window.addEventListener('click', (e) => {
@@ -2073,6 +2144,26 @@ processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<spa
             toast.className = "toast show";
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2500);
         }
+
+        // ==========================================
+        // 하단 바 숨기기 / 보이기 토글 로직
+        // ==========================================
+        const bottomEditBar = document.getElementById('bottom-edit-bar');
+        const menuFab = document.getElementById('menu-fab');
+        const closeBarBtn = document.getElementById('close-bar-btn');
+
+        // 바 내부의 X 버튼 클릭 시 바 숨기기 + 톱니바퀴 보이기
+        closeBarBtn.addEventListener('click', () => {
+            bottomEditBar.classList.add('hidden');
+            menuFab.classList.remove('hidden');
+        });
+
+        // 톱니바퀴 버튼 클릭 시 바 보이기 + 톱니바퀴 숨기기
+        menuFab.addEventListener('click', () => {
+            bottomEditBar.classList.remove('hidden');
+            menuFab.classList.add('hidden');
+        });
+        
     </script>
 </body>
 </html>
