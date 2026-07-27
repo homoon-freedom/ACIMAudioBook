@@ -842,7 +842,19 @@
                         </div>
                     </div>
                 </div>
+                <!-- 연습서 편집 모달 내부 탭 -->
+                <div class="modal-tab-menu">
+                    <button class="modal-tab-btn active" data-target="wb-tab-note">본문내용</button>
+                    <button class="modal-tab-btn" data-target="wb-tab-summary">나의 정리</button>
+                </div>
+
+                <div id="wb-tab-note" class="modal-tab-content active">
+                    <textarea id="wb-note-textarea" class="wb-textarea" placeholder="여기에 본문 내용을 작성하세요..."></textarea>
+                </div>
                 
+                <div id="wb-tab-summary" class="modal-tab-content">
+                    <textarea id="wb-summary-textarea" class="wb-textarea" placeholder="여기에 나의 정리를 작성하세요... (백업/복원 시 분리되어 관리됩니다)"></textarea>
+                </div>
                 <!-- 관련 교과서 연결 영역 (연습서 전용) -->
                 <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
                     <label class="edit-label" style="display:block; margin-bottom:10px;">🔗 관련 교과서 연결 (최대 3개)</label>
@@ -871,19 +883,6 @@
                     </div>
                 </div>
 
-                <!-- 연습서 편집 모달 내부 탭 -->
-                <div class="modal-tab-menu">
-                    <button class="modal-tab-btn active" data-target="wb-tab-note">본문내용</button>
-                    <button class="modal-tab-btn" data-target="wb-tab-summary">나의 정리</button>
-                </div>
-
-                <div id="wb-tab-note" class="modal-tab-content active">
-                    <textarea id="wb-note-textarea" class="wb-textarea" placeholder="여기에 본문 내용을 작성하세요..."></textarea>
-                </div>
-                
-                <div id="wb-tab-summary" class="modal-tab-content">
-                    <textarea id="wb-summary-textarea" class="wb-textarea" placeholder="여기에 나의 정리를 작성하세요... (백업/복원 시 분리되어 관리됩니다)"></textarea>
-                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-save-wb" id="save-wb-btn">저장하기</button>
