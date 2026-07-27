@@ -1759,11 +1759,37 @@
             returnAudioBtn.style.display = 'none';
             resetModalTabs('#read-modal-overlay');
             
+            // 💡 최종 수정된 텍스트 포맷팅 함수 (닫는 쌍따옴표 종류 보강)
+            const formatNoteContent = (text) => {
+                // 1. HTML 특수문자(<, >) 안전 변환
+                let processedText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                // 2. 따옴표 내부 이탤릭 볼드체 지정 (왼쪽, 오른쪽, 일반 쌍따옴표 모두 인식되도록 괄호 안의 패턴 수정)
+
+processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<span style="display: block; text-align: center; color: #38A169;">$1<span style="font-weight: 500; font-style: italic;">$2</span>$3</span>');
+
+                
+                // 3. 줄 단위 분할 후 맨 앞 # 처리 (화면에서 # 기호 숨김)
+                let lines = processedText.split('\n');
+                lines = lines.map(line => {
+                    let trimmed = line.trim();
+                    let rawText = trimmed.replace(/<[^>]*>?/gm, '');
+                    if (rawText.startsWith('#')) {
+                        let cleanedLine = line.replace(/^\s*#\s*/, '');
+                        return `<span style="font-weight: 700;">${cleanedLine}</span>`;
+                    }
+                    return line;
+                });
+                
+                // 4. 합친 후 줄바꿈을 <br>로 변경
+                return lines.join('<br>');
+            };
+
             // 본문내용 로드
             const savedNote = localStorage.getItem(id + "_note");
             const noteEl = document.getElementById('read-note-content');
             if (savedNote && savedNote.trim() !== "") {
-                noteEl.textContent = savedNote;
+                noteEl.innerHTML = formatNoteContent(savedNote); 
                 noteEl.style.color = "#2D3748";
             } else {
                 noteEl.textContent = "작성된 노트가 없습니다.";
