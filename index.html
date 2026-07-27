@@ -1691,7 +1691,9 @@
                 loadGeneralEditData();
             }
             resetModalTabs('#edit-modal-overlay');
-            document.getElementById('edit-modal-overlay').style.display = 'flex';
+            const editModal = document.getElementById('edit-modal-overlay');
+            editModal.style.display = 'flex';
+            editModal.querySelector('.fullscreen-edit-body').scrollTop = 0;
         });
 
         document.getElementById('close-edit-modal').addEventListener('click', () => {
@@ -1738,7 +1740,9 @@
                 loadWbEditData();
             }
             resetModalTabs('#wb-edit-modal-overlay');
-            document.getElementById('wb-edit-modal-overlay').style.display = 'flex';
+            const wbEditModal = document.getElementById('wb-edit-modal-overlay');
+            wbEditModal.style.display = 'flex';
+            wbEditModal.querySelector('.fullscreen-edit-body').scrollTop = 0;
         });
 
         document.getElementById('close-wb-edit-modal').addEventListener('click', () => {
@@ -1827,6 +1831,7 @@
                 loadAudio(id);
             }
             readModalOverlay.style.display = 'flex';
+            readModalOverlay.querySelector('.ebook-body').scrollTop = 0;
         }
 
         returnAudioBtn.addEventListener('click', () => {
