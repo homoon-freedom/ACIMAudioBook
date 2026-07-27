@@ -60,7 +60,7 @@
             font-weight: 700;
         }
 
-        /* 탭 메뉴 스타일 */
+        /* 메인 탭 메뉴 스타일 */
         .tab-menu {
             display: flex;
             gap: 6px;
@@ -101,6 +101,53 @@
 
         .tab-content.active {
             display: block;
+        }
+
+        /* 모달창 내부 서브 탭 스타일 */
+        .modal-tab-menu {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 15px;
+            background: #EDF2F7;
+            padding: 6px;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+        
+        .modal-tab-btn {
+            flex: 1;
+            padding: 10px 8px;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4A5568;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .modal-tab-btn.active {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        
+        .modal-tab-content {
+            display: none;
+            flex-grow: 1;
+            flex-direction: column;
+        }
+        
+        .modal-tab-content.active {
+            display: flex;
+        }
+
+        .modal-tab-content textarea {
+            flex-grow: 1;
+            height: 100%;
+            min-height: 250px;
         }
 
         .toc-list {
@@ -182,7 +229,6 @@
             display: block;
         }
 
-        /* 하위 목차 줄간격(상하 패딩) 추가 축소 */
         .sub-list .toc-item {
             padding-top: 6px;
             padding-bottom: 6px;
@@ -227,7 +273,6 @@
             font-size: 13px;
         }
 
-        /* 하위 목차 안의 버튼은 크기를 약간 더 줄여서 높이를 낮춤 */
         .sub-list .play-btn,
         .sub-list .reset-btn {
             width: 36px;
@@ -375,6 +420,8 @@
             overflow-y: auto;
             flex-grow: 1;
             background-color: #FAFCFF; 
+            display: flex;
+            flex-direction: column;
         }
 
         .ebook-text {
@@ -462,11 +509,10 @@
 
         textarea {
             width: 100%;
-            height: 180px;
             padding: 15px;
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            resize: vertical;
+            resize: none;
             font-size: 16px;
             line-height: 1.6;
             font-family: inherit;
@@ -482,12 +528,6 @@
             flex-direction: column;
             gap: 15px;
             box-sizing: border-box;
-        }
-
-        .fullscreen-edit-body textarea {
-            flex-grow: 1;
-            height: auto;
-            min-height: 250px;
         }
 
         textarea:focus {
@@ -703,7 +743,19 @@
                 </div>
             </div>
             <div class="ebook-body">
-                <div id="read-note-content" class="ebook-text">작성된 노트가 없습니다.</div>
+                <!-- 읽기 모달 내부 탭 -->
+                <div class="modal-tab-menu">
+                    <button class="modal-tab-btn active" data-target="read-tab-note">본문내용</button>
+                    <button class="modal-tab-btn" data-target="read-tab-summary">나의 정리</button>
+                </div>
+
+                <div id="read-tab-note" class="modal-tab-content active">
+                    <div id="read-note-content" class="ebook-text">작성된 노트가 없습니다.</div>
+                </div>
+                
+                <div id="read-tab-summary" class="modal-tab-content">
+                    <div id="read-summary-content" class="ebook-text">작성된 정리가 없습니다.</div>
+                </div>
                 
                 <!-- 연습서일 때만 보이는 관련 교과서 목록 영역 -->
                 <div id="read-related-section" class="related-section" style="display: none;">
@@ -738,7 +790,19 @@
                     </div>
                 </div>
 
-                <textarea id="edit-note-textarea" placeholder="여기에 묵상 내용이나 노트를 작성하세요..."></textarea>
+                <!-- 일반 편집 모달 내부 탭 -->
+                <div class="modal-tab-menu">
+                    <button class="modal-tab-btn active" data-target="edit-tab-note">본문내용</button>
+                    <button class="modal-tab-btn" data-target="edit-tab-summary">나의 정리</button>
+                </div>
+
+                <div id="edit-tab-note" class="modal-tab-content active">
+                    <textarea id="edit-note-textarea" placeholder="여기에 본문 내용을 작성하세요..."></textarea>
+                </div>
+                
+                <div id="edit-tab-summary" class="modal-tab-content">
+                    <textarea id="edit-summary-textarea" placeholder="여기에 나의 정리를 작성하세요... (백업/복원 시 제외됩니다)"></textarea>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-save" id="save-btn">저장하기</button>
@@ -795,7 +859,19 @@
                     </div>
                 </div>
 
-                <textarea id="wb-note-textarea" class="wb-textarea" placeholder="여기에 묵상 내용이나 노트를 작성하세요..."></textarea>
+                <!-- 연습서 편집 모달 내부 탭 -->
+                <div class="modal-tab-menu">
+                    <button class="modal-tab-btn active" data-target="wb-tab-note">본문내용</button>
+                    <button class="modal-tab-btn" data-target="wb-tab-summary">나의 정리</button>
+                </div>
+
+                <div id="wb-tab-note" class="modal-tab-content active">
+                    <textarea id="wb-note-textarea" class="wb-textarea" placeholder="여기에 본문 내용을 작성하세요..."></textarea>
+                </div>
+                
+                <div id="wb-tab-summary" class="modal-tab-content">
+                    <textarea id="wb-summary-textarea" class="wb-textarea" placeholder="여기에 나의 정리를 작성하세요... (백업/복원 시 제외됩니다)"></textarea>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-save-wb" id="save-wb-btn">저장하기</button>
@@ -1481,6 +1557,7 @@
 
         buildTOC();
 
+        // 메인 탭 전환
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1490,6 +1567,32 @@
                 document.getElementById(btn.getAttribute('data-target')).classList.add('active');
             });
         });
+
+        // 모달창 탭 전환 (본문내용 / 나의 정리)
+        document.querySelectorAll('.modal-tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const parentBody = e.target.closest('.ebook-body') || e.target.closest('.fullscreen-edit-body');
+                parentBody.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+                parentBody.querySelectorAll('.modal-tab-content').forEach(c => c.classList.remove('active'));
+                
+                btn.classList.add('active');
+                document.getElementById(btn.getAttribute('data-target')).classList.add('active');
+            });
+        });
+
+        // 모달창 탭 초기화 함수
+        function resetModalTabs(containerSelector) {
+            const container = document.querySelector(containerSelector);
+            if (!container) return;
+            const tabs = container.querySelectorAll('.modal-tab-btn');
+            const contents = container.querySelectorAll('.modal-tab-content');
+            if (tabs.length > 0 && contents.length > 0) {
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                tabs[0].classList.add('active');
+                contents[0].classList.add('active');
+            }
+        }
 
         function setupCustomDropdown(containerId, items, onSelect, defaultText = "선택하세요") {
             const container = document.getElementById(containerId);
@@ -1567,6 +1670,7 @@
 
         function loadGeneralEditData() {
             document.getElementById('edit-note-textarea').value = localStorage.getItem(generalSelectedId + "_note") || "";
+            document.getElementById('edit-summary-textarea').value = localStorage.getItem(generalSelectedId + "_summary") || "";
         }
 
         document.getElementById('open-general-edit-btn').addEventListener('click', () => {
@@ -1575,6 +1679,7 @@
                 generalDropdown.setValue(generalSelectedId);
                 loadGeneralEditData();
             }
+            resetModalTabs('#edit-modal-overlay');
             document.getElementById('edit-modal-overlay').style.display = 'flex';
         });
 
@@ -1604,6 +1709,7 @@
 
         function loadWbEditData() {
             document.getElementById('wb-note-textarea').value = localStorage.getItem(wbSelectedId + "_note") || "";
+            document.getElementById('wb-summary-textarea').value = localStorage.getItem(wbSelectedId + "_summary") || "";
             
             rel1Id = localStorage.getItem(wbSelectedId + "_rel1") || "";
             rel2Id = localStorage.getItem(wbSelectedId + "_rel2") || "";
@@ -1620,6 +1726,7 @@
                 wbDropdown.setValue(wbSelectedId);
                 loadWbEditData();
             }
+            resetModalTabs('#wb-edit-modal-overlay');
             document.getElementById('wb-edit-modal-overlay').style.display = 'flex';
         });
 
@@ -1635,7 +1742,9 @@
             document.getElementById('read-modal-title').textContent = title;
             currentOpenedReadId = id;
             returnAudioBtn.style.display = 'none';
+            resetModalTabs('#read-modal-overlay');
             
+            // 본문내용 로드
             const savedNote = localStorage.getItem(id + "_note");
             const noteEl = document.getElementById('read-note-content');
             if (savedNote && savedNote.trim() !== "") {
@@ -1645,7 +1754,19 @@
                 noteEl.textContent = "작성된 노트가 없습니다.";
                 noteEl.style.color = "#A0AEC0";
             }
+
+            // 나의 정리 로드
+            const savedSummary = localStorage.getItem(id + "_summary");
+            const summaryEl = document.getElementById('read-summary-content');
+            if (savedSummary && savedSummary.trim() !== "") {
+                summaryEl.textContent = savedSummary;
+                summaryEl.style.color = "#2D3748";
+            } else {
+                summaryEl.textContent = "작성된 정리가 없습니다.";
+                summaryEl.style.color = "#A0AEC0";
+            }
             
+            // 관련 교과서 목록 로드 (연습서의 경우)
             const relatedSection = document.getElementById('read-related-section');
             const relatedList = document.getElementById('related-list');
             relatedList.innerHTML = '';
@@ -1761,15 +1882,19 @@
         document.getElementById('save-btn').addEventListener('click', () => {
             if (!generalSelectedId) return;
             const note = document.getElementById('edit-note-textarea').value;
+            const summary = document.getElementById('edit-summary-textarea').value;
             localStorage.setItem(generalSelectedId + "_note", note);
+            localStorage.setItem(generalSelectedId + "_summary", summary);
             showToast("성공적으로 저장되었습니다.");
         });
 
         document.getElementById('save-wb-btn').addEventListener('click', () => {
             if (!wbSelectedId) return;
             const note = document.getElementById('wb-note-textarea').value;
+            const summary = document.getElementById('wb-summary-textarea').value;
             
             localStorage.setItem(wbSelectedId + "_note", note);
+            localStorage.setItem(wbSelectedId + "_summary", summary);
             localStorage.setItem(wbSelectedId + "_rel1", rel1Dropdown.getValue());
             localStorage.setItem(wbSelectedId + "_rel2", rel2Dropdown.getValue());
             localStorage.setItem(wbSelectedId + "_rel3", rel3Dropdown.getValue());
@@ -1781,7 +1906,8 @@
             const backupData = {};
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key.startsWith('audio_')) {
+                // "나의 정리" (_summary)는 백업에서 제외합니다.
+                if (key.startsWith('audio_') && !key.endsWith('_summary')) {
                     backupData[key] = localStorage.getItem(key);
                 }
             }
@@ -1836,14 +1962,18 @@
                         throw new Error("올바른 백업 파일 형식이 아닙니다.");
                     }
 
-                    if (confirm("기존에 저장된 모든 노트와 연결 정보가 백업 파일의 내용으로 덮어씌워집니다. 진행하시겠습니까?")) {
+                    if (confirm("기존에 저장된 노트와 연결 정보가 백업 파일의 내용으로 덮어씌워집니다.\n(※ '나의 정리' 내용은 덮어씌워지지 않고 보존됩니다.)\n진행하시겠습니까?")) {
                         const keysToRemove = [];
                         for (let i = 0; i < localStorage.length; i++) {
                             const key = localStorage.key(i);
-                            if (key.startsWith('audio_')) keysToRemove.push(key);
+                            // "나의 정리" (_summary)는 기존 데이터를 유지하기 위해 삭제 목록에서 제외합니다.
+                            if (key.startsWith('audio_') && !key.endsWith('_summary')) {
+                                keysToRemove.push(key);
+                            }
                         }
                         keysToRemove.forEach(k => localStorage.removeItem(k));
 
+                        // 백업된 데이터(본문내용 및 연결 정보)만 덮어씌웁니다.
                         for (const [key, value] of Object.entries(restoredData)) {
                             localStorage.setItem(key, value);
                         }
