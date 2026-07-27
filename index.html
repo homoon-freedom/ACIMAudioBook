@@ -41,7 +41,7 @@
             border-radius: 0; 
             box-shadow: none; 
             padding: 20px;
-            padding-bottom: 90px;
+            padding-bottom: 120px; /* 하단 바 높이 증가로 인한 여백 조정 */
             box-sizing: border-box; 
         }
 
@@ -290,6 +290,7 @@
             transform: scale(1.05);
         }
 
+        /* 하단 고정 바 2줄 레이아웃으로 변경 */
         .bottom-edit-bar {
             position: fixed;
             bottom: 0;
@@ -299,20 +300,26 @@
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             border-top: 1px solid var(--border-color);
-            padding: 15px 20px;
-            padding-bottom: calc(15px + env(safe-area-inset-bottom));
+            padding: 12px 15px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
             gap: 8px;
             box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
             z-index: 500;
         }
 
+        .bottom-bar-row {
+            display: flex;
+            width: 100%;
+            gap: 8px;
+            justify-content: center;
+        }
+
         .bottom-edit-bar button, .bottom-edit-bar label {
-            height: 46px; 
-            font-size: 14px;
-            border-radius: 10px;
+            height: 42px; 
+            font-size: 13px;
+            border-radius: 8px;
             border: none;
             font-weight: 600;
             cursor: pointer;
@@ -324,27 +331,22 @@
             align-items: center;
             justify-content: center;
             line-height: 1;
+            flex: 1;
+            padding: 0 4px;
+            word-break: keep-all;
         }
         
         .bottom-edit-bar button:active, .bottom-edit-bar label:active { transform: scale(0.98); }
         .bottom-edit-bar button:hover, .bottom-edit-bar label:hover { opacity: 0.9; }
 
-        .btn-general-edit, .btn-wb-edit {
-            flex: 2;
-            max-width: 200px;
-        }
-
-        .btn-backup, .btn-restore {
-            flex: 1;
-            max-width: 85px;
-            font-size: 13px;
-            padding: 0 6px; 
-        }
-
-        .btn-general-edit { background-color: #38A169; } 
-        .btn-wb-edit { background-color: var(--wb-color); }
-        .btn-backup { background-color: #3182CE; }
-        .btn-restore { background-color: #DD6B20; }
+        .btn-general-edit { background-color: #38A169; font-size: 14px; } 
+        .btn-wb-edit { background-color: var(--wb-color); font-size: 14px; }
+        
+        .btn-backup-note { background-color: #3182CE; }
+        .btn-restore-note { background-color: #2B6CB0; }
+        
+        .btn-backup-summary { background-color: #D69E2E; }
+        .btn-restore-summary { background-color: #B7791F; }
 
         .modal-overlay {
             display: none;
@@ -720,11 +722,21 @@
 
     <!-- 하단 고정 편집 바 -->
     <div class="bottom-edit-bar">
-        <button id="open-general-edit-btn" class="btn-general-edit">일반편집</button>
-        <button id="open-wb-edit-btn" class="btn-wb-edit">연습서편집</button>
-        <button id="backup-btn" class="btn-backup">공유/백업</button>
-        <label for="restore-file-input" class="btn-restore">복원</label>
-        <input type="file" id="restore-file-input" accept=".json" style="display: none;">
+        <div class="bottom-bar-row">
+            <button id="open-general-edit-btn" class="btn-general-edit">일반편집</button>
+            <button id="open-wb-edit-btn" class="btn-wb-edit">연습서편집</button>
+        </div>
+        <div class="bottom-bar-row">
+            <!-- 본문(노트) 백업/복원 -->
+            <button id="backup-note-btn" class="btn-backup-note">본문백업</button>
+            <label for="restore-note-input" class="btn-restore-note">본문복원</label>
+            <input type="file" id="restore-note-input" accept=".json" style="display: none;">
+            
+            <!-- 나의 정리 백업/복원 -->
+            <button id="backup-summary-btn" class="btn-backup-summary">정리백업</button>
+            <label for="restore-summary-input" class="btn-restore-summary">정리복원</label>
+            <input type="file" id="restore-summary-input" accept=".json" style="display: none;">
+        </div>
     </div>
 
     <!-- 읽기 전용 이북(eBook) 모달 -->
@@ -801,7 +813,7 @@
                 </div>
                 
                 <div id="edit-tab-summary" class="modal-tab-content">
-                    <textarea id="edit-summary-textarea" placeholder="여기에 나의 정리를 작성하세요... (백업/복원 시 제외됩니다)"></textarea>
+                    <textarea id="edit-summary-textarea" placeholder="여기에 나의 정리를 작성하세요... (백업/복원 시 분리되어 관리됩니다)"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -870,7 +882,7 @@
                 </div>
                 
                 <div id="wb-tab-summary" class="modal-tab-content">
-                    <textarea id="wb-summary-textarea" class="wb-textarea" placeholder="여기에 나의 정리를 작성하세요... (백업/복원 시 제외됩니다)"></textarea>
+                    <textarea id="wb-summary-textarea" class="wb-textarea" placeholder="여기에 나의 정리를 작성하세요... (백업/복원 시 분리되어 관리됩니다)"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1902,20 +1914,27 @@
             showToast("성공적으로 저장되었습니다.");
         });
 
-        document.getElementById('backup-btn').addEventListener('click', async () => {
+        // ------------------ 공유/백업 로직 분리 ------------------
+
+        async function handleBackup(isSummary) {
             const backupData = {};
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                // "나의 정리" (_summary)는 백업에서 제외합니다.
-                if (key.startsWith('audio_') && !key.endsWith('_summary')) {
-                    backupData[key] = localStorage.getItem(key);
+                if (key.startsWith('audio_')) {
+                    const isSummaryKey = key.endsWith('_summary');
+                    if (isSummary && isSummaryKey) {
+                        backupData[key] = localStorage.getItem(key);
+                    } else if (!isSummary && !isSummaryKey) {
+                        backupData[key] = localStorage.getItem(key);
+                    }
                 }
             }
 
             const jsonData = JSON.stringify(backupData, null, 2);
             const date = new Date();
             const dateStr = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
-            const fileName = `기적수업_오디오북_백업_${dateStr}.json`;
+            const typeStr = isSummary ? "나의정리" : "본문";
+            const fileName = `기적수업_오디오북_${typeStr}_백업_${dateStr}.json`;
 
             const file = new File([jsonData], fileName, { type: 'application/json' });
 
@@ -1923,9 +1942,9 @@
                 try {
                     await navigator.share({
                         files: [file],
-                        title: '기적수업 오디오북 백업'
+                        title: `기적수업 오디오북 ${typeStr} 백업`
                     });
-                    showToast("공유가 완료되었습니다.");
+                    showToast(`${typeStr} 공유가 완료되었습니다.`);
                 } catch (error) {
                     console.log('공유 취소 또는 실패:', error);
                     if (error.name !== 'AbortError') {
@@ -1935,7 +1954,7 @@
             } else {
                 downloadBackup(jsonData, fileName);
             }
-        });
+        }
 
         function downloadBackup(jsonData, fileName) {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(jsonData);
@@ -1950,7 +1969,15 @@
             showToast("기기에서 공유를 지원하지 않아 파일로 다운로드되었습니다.");
         }
 
-        document.getElementById('restore-file-input').addEventListener('change', (event) => {
+        // 본문 백업 버튼
+        document.getElementById('backup-note-btn').addEventListener('click', () => handleBackup(false));
+        // 나의 정리 백업 버튼
+        document.getElementById('backup-summary-btn').addEventListener('click', () => handleBackup(true));
+
+
+        // ------------------ 복원 로직 분리 ------------------
+
+        function handleRestore(event, isSummary) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -1962,18 +1989,25 @@
                         throw new Error("올바른 백업 파일 형식이 아닙니다.");
                     }
 
-                    if (confirm("기존에 저장된 노트와 연결 정보가 백업 파일의 내용으로 덮어씌워집니다.\n(※ '나의 정리' 내용은 덮어씌워지지 않고 보존됩니다.)\n진행하시겠습니까?")) {
+                    const typeStr = isSummary ? "나의 정리" : "본문 노트와 연결 정보";
+                    if (confirm(`기존에 저장된 ${typeStr}가 백업 파일의 내용으로 덮어씌워집니다. 진행하시겠습니까?`)) {
+                        
+                        // 기존 데이터 삭제 (유형에 따라 선택적 삭제)
                         const keysToRemove = [];
                         for (let i = 0; i < localStorage.length; i++) {
                             const key = localStorage.key(i);
-                            // "나의 정리" (_summary)는 기존 데이터를 유지하기 위해 삭제 목록에서 제외합니다.
-                            if (key.startsWith('audio_') && !key.endsWith('_summary')) {
-                                keysToRemove.push(key);
+                            if (key.startsWith('audio_')) {
+                                const isSummaryKey = key.endsWith('_summary');
+                                if (isSummary && isSummaryKey) {
+                                    keysToRemove.push(key);
+                                } else if (!isSummary && !isSummaryKey) {
+                                    keysToRemove.push(key);
+                                }
                             }
                         }
                         keysToRemove.forEach(k => localStorage.removeItem(k));
 
-                        // 백업된 데이터(본문내용 및 연결 정보)만 덮어씌웁니다.
+                        // 백업 데이터 덮어쓰기
                         for (const [key, value] of Object.entries(restoredData)) {
                             localStorage.setItem(key, value);
                         }
@@ -1988,7 +2022,13 @@
                 }
             };
             reader.readAsText(file);
-        });
+        }
+
+        // 본문 복원 input
+        document.getElementById('restore-note-input').addEventListener('change', (e) => handleRestore(e, false));
+        // 나의 정리 복원 input
+        document.getElementById('restore-summary-input').addEventListener('change', (e) => handleRestore(e, true));
+
 
         document.getElementById('close-read-modal').addEventListener('click', () => readModalOverlay.style.display = 'none');
         window.addEventListener('click', (e) => {
