@@ -570,7 +570,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 10px;
+            position: relative;
         }
 
         .audio-ctrl-btn {
@@ -604,6 +605,28 @@
         }
         .audio-ctrl-btn.main-play:hover {
             background: #235A96;
+        }
+
+        /* 북마크 버튼 스타일 */
+        .bookmark-btn {
+            position: absolute;
+            right: 0;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #2B6CB0;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .bookmark-btn:hover {
+            background: #EBF8FF;
         }
 
         .audio-progress-row {
@@ -902,6 +925,9 @@
                         <button class="audio-ctrl-btn" id="audio-pause-btn" title="일시정지" style="display: none;">⏸</button>
                         <button class="audio-ctrl-btn" id="audio-stop-btn" title="정지">⏹</button>
                         <button class="audio-ctrl-btn" id="audio-forward-btn" title="10초 앞으로">⏩</button>
+                        
+                        <!-- 북마크 버튼 -->
+                        <button class="bookmark-btn" id="bookmark-jump-btn" title="저장된 북마크로 이동">📌</button>
                     </div>
                     <div class="audio-progress-row">
                         <span class="audio-time" id="audio-current-time">00:00</span>
@@ -1904,7 +1930,7 @@
             document.getElementById('wb-edit-modal-overlay').style.display = 'none';
         });
 
-        // ------------------ 커스텀 오디오 제어 로직 ------------------
+        // ------------------ 커스텀 오디오 및 북마크 제어 로직 ------------------
         const readModalOverlay = document.getElementById('read-modal-overlay');
         const readAudioPlayer = document.getElementById('read-audio-player');
         const playBtnEl = document.getElementById('audio-play-btn');
@@ -1912,6 +1938,7 @@
         const stopBtnEl = document.getElementById('audio-stop-btn');
         const backwardBtnEl = document.getElementById('audio-backward-btn');
         const forwardBtnEl = document.getElementById('audio-forward-btn');
+        const bookmarkBtnEl = document.getElementById('bookmark-jump-btn');
         const currentTimeEl = document.getElementById('audio-current-time');
         const durationEl = document.getElementById('audio-duration');
         const progressBarEl = document.getElementById('audio-progress-bar');
@@ -1940,13 +1967,20 @@
             }
         });
 
-        progressSliderEl.addEventListener('input', (e) => {
-            if (!isNaN(readAudioPlayer.duration)) {
-                const targetTime = (e.target.value / 100) * readAudioPlayer.duration;
-                readAudioPlayer.currentTime = targetTime;
+        // 북마크 버튼 클릭 시 저장된 위치로 점프
+        bookmarkBtnEl.addEventListener('click', () => {
+            if (currentOpenedReadId) {
+                const savedTime = localStorage.getItem(currentOpenedReadId + "_bookmark");
+                if (savedTime !== null) {
+                    readAudioPlayer.currentTime = parseFloat(savedTime);
+                    showToast(`${formatTime(parseFloat(savedTime))} 북마크로 이동했습니다.`);
+                } else {
+                    showToast("저장된 북마크가 없습니다.");
+                }
             }
         });
 
+        // 재생 중 0.5초마다 현재 위치 자동 북마크 저장
         readAudioPlayer.addEventListener('timeupdate', () => {
             if (!isNaN(readAudioPlayer.duration) && readAudioPlayer.duration > 0) {
                 const percent = (readAudioPlayer.currentTime / readAudioPlayer.duration) * 100;
@@ -1954,6 +1988,18 @@
                 progressSliderEl.value = percent;
                 currentTimeEl.textContent = formatTime(readAudioPlayer.currentTime);
                 durationEl.textContent = formatTime(readAudioPlayer.duration);
+
+                // 현재 위치 자동 기록
+                if (currentOpenedReadId && readAudioPlayer.currentTime > 0) {
+                    localStorage.setItem(currentOpenedReadId + "_bookmark", readAudioPlayer.currentTime);
+                }
+            }
+        });
+
+        progressSliderEl.addEventListener('input', (e) => {
+            if (!isNaN(readAudioPlayer.duration)) {
+                const targetTime = (e.target.value / 100) * readAudioPlayer.duration;
+                readAudioPlayer.currentTime = targetTime;
             }
         });
 
