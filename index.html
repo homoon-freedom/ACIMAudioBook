@@ -2032,9 +2032,17 @@
             resetModalTabs('#read-modal-overlay');
             
             const formatNoteContent = (text) => {
+                // 1. HTML 태그 이스케이프 처리
                 let processedText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                // 2. 기존 로직: 큰따옴표(" ") 텍스트 초록색 및 가운데 정렬 처리
                 processedText = processedText.replace(/(["“”])([\s\S]*?)(["“”])/g, '<span style="display: block; text-align: center; color: #38A169;">$1<span style="font-weight: 500; font-style: italic;">$2</span>$3</span>');
 
+                // 3. 추가된 로직: 작은따옴표(' ' 또는 ‘ ’) 텍스트와 따옴표 자체를 파란색으로 처리
+                // UI와 어울리도록 테마 색상인 파란색(#3182CE)을 적용했습니다.
+                processedText = processedText.replace(/(['‘])([\s\S]*?)(['’])/g, '<span style="color: #3182CE;">$1$2$3</span>');
+
+                // 4. 줄바꿈 및 # 헤딩 처리
                 let lines = processedText.split('\n');
                 lines = lines.map(line => {
                     let trimmed = line.trim();
@@ -2047,6 +2055,7 @@
                 });
                 return lines.join('<br>');
             };
+
 
             const savedNote = localStorage.getItem(id + "_note");
             const noteEl = document.getElementById('read-note-content');
