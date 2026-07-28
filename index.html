@@ -2035,13 +2035,16 @@
                 // 1. HTML 태그 이스케이프 처리
                 let processedText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 
-                // 2. 큰따옴표(" ") 텍스트 초록색 및 가운데 정렬 처리 (오류 방지 정규식으로 개선)
+                // 2. 큰따옴표(" ") 텍스트 초록색 및 가운데 정렬 처리
                 processedText = processedText.replace(/(["“”])([^\s"“”][^"“”]*?[^\s"“”]|[^\s"“”])(["“”])/g, '<span style="display: block; text-align: center; color: #38A169;">$1<span style="font-weight: 500; font-style: italic;">$2</span>$3</span>');
 
-                // 3. 작은따옴표(' ' 또는 ‘ ’) 텍스트 파란색 처리 (문장 밖으로 색이 번지는 현상 완벽 해결)
+                // 3. 작은따옴표(' ' 또는 ‘ ’) 텍스트 파란색 처리
                 processedText = processedText.replace(/(['‘])([^\s'‘’][^'‘’]*?[^\s'‘’]|[^\s'‘’])(['’])/g, '<span style="color: #3182CE;">$1$2$3</span>');
 
-                // 4. 줄바꿈 및 # 헤딩 처리
+                // 4. 괄호(( ) 또는 （ ）) 텍스트 초록색 처리 (추가된 부분)
+                processedText = processedText.replace(/([\(（])([^)）]+)([\)）])/g, '<span style="color: #38A169;">$1$2$3</span>');
+
+                // 5. 줄바꿈 및 # 헤딩 처리
                 let lines = processedText.split('\n');
                 lines = lines.map(line => {
                     let trimmed = line.trim();
@@ -2054,6 +2057,7 @@
                 });
                 return lines.join('<br>');
             };
+
 
 
 
