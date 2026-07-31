@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>오디오북:기적수업</title>
+    <!-- 프리텐다드(Pretendard) 웹폰트 로드 -->
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
     <style>
         :root {
@@ -59,6 +60,7 @@
             font-weight: 700;
         }
 
+        /* 메인 탭 메뉴 스타일 */
         .tab-menu {
             display: flex;
             gap: 6px;
@@ -101,6 +103,7 @@
             display: block;
         }
 
+        /* 모달창 내부 서브 탭 스타일 */
         .modal-tab-menu {
             display: flex;
             gap: 6px;
@@ -287,6 +290,7 @@
             transform: scale(1.05);
         }
 
+        /* 플로팅 메뉴 버튼 및 하단 바 스타일 */
         .menu-fab {
             position: fixed;
             bottom: calc(20px + env(safe-area-inset-bottom));
@@ -551,13 +555,14 @@
             color: #4A5568;
         }
 
+        /* 관련 교과서 제목 텍스트 스타일 */
         .related-item span.related-title-text {
             font-size: 15px;
             font-weight: 500;
             color: #4A5568;
             cursor: pointer;
             transition: color 0.2s;
-            padding: 5px 0; 
+            padding: 5px 0; /* 터치 영역 확보 */
         }
 
         .related-item span.related-title-text:hover {
@@ -565,6 +570,7 @@
             text-decoration: underline;
         }
 
+        /* 커스텀 오디오 플레이어 스타일 */
         .custom-audio-player {
             background: #E2E8F0;
             border-radius: 12px;
@@ -616,6 +622,7 @@
             background: #235A96;
         }
 
+        /* 북마크 버튼 스타일 */
         .bookmark-btn {
             position: absolute;
             right: 0;
@@ -1096,7 +1103,6 @@
                         title: "제1장 기적의 의미",
                         playlist: ["audio_5_1.mp3", "audio_5_2.mp3", "audio_6.mp3", "audio_7.mp3", "audio_8.mp3", "audio_9.mp3", "audio_10.mp3", "audio_11.mp3"],
                         sublist: [
-                            // 여기서 sublist를 완전히 제외하고 playlist만 지정하여 우측에 버튼이 나타나게 합니다.
                             {
                                 title: "T-1.I. 기적의 원리",
                                 playlist: ["audio_5_1.mp3", "audio_5_2.mp3"]
@@ -1546,18 +1552,25 @@
                 subListUl.appendChild(allPlayLi);
 
                 subItem.sublist.forEach((nestedItem, nestedIdx) => {
-                    if (typeof nestedItem === 'object' && nestedItem !== null) {
+                    // 수정된 부분: sublist 속성이 있는 객체만 하위 폴더(renderDeepSubItem)로 처리
+                    if (typeof nestedItem === 'object' && nestedItem !== null && nestedItem.sublist) {
                         renderDeepSubItem(nestedItem, nestedIdx, subListUl, getNextIndex, title, sectionName);
                     } else {
                         const deepId = `audio_${getNextIndex()}`;
-                        const fullTitle = `${title} > ${nestedItem}`;
-                        editableChapters.push({ id: deepId, title: fullTitle, audioFile: `${deepId}.mp3`, section: sectionName });
+                        const itemTitle = typeof nestedItem === 'object' ? nestedItem.title : nestedItem;
+                        const fullTitle = `${title} > ${itemTitle}`;
+                        
+                        if (typeof nestedItem === 'object' && nestedItem.playlist) {
+                            editableChapters.push({ id: deepId, title: fullTitle, playlist: nestedItem.playlist, section: sectionName });
+                        } else {
+                            editableChapters.push({ id: deepId, title: fullTitle, audioFile: `${deepId}.mp3`, section: sectionName });
+                        }
                         
                         const itemLi = document.createElement('li');
                         itemLi.className = 'toc-item';
                         itemLi.style.paddingLeft = "30px";
                         itemLi.innerHTML = `
-                            <div class="toc-title">${formatTitleText(nestedItem)}</div>
+                            <div class="toc-title">${formatTitleText(itemTitle)}</div>
                             <div class="btn-group-right">
                                 <button class="play-btn" data-id="${deepId}" title="재생 / 일시정지">▶</button>
                                 <button class="reset-btn" data-id="${deepId}" title="처음부터 다시 듣기">↺</button>
@@ -1719,7 +1732,12 @@
 
             const deepAllPlayId = `audio_${getNextIndex()}`;
             const deepAllPlayTitle = `${subItem.title} (전체 듣기)`;
-            editableChapters.push({ id: deepAllPlayId, title: deepAllPlayTitle, audioFile: `${deepAllPlayId}.mp3`, section: sectionName });
+            
+            if (subItem.playlist) {
+                editableChapters.push({ id: deepAllPlayId, title: deepAllPlayTitle, playlist: subItem.playlist, section: sectionName });
+            } else {
+                editableChapters.push({ id: deepAllPlayId, title: deepAllPlayTitle, audioFile: `${deepAllPlayId}.mp3`, section: sectionName });
+            }
 
             const deepAllPlayLi = document.createElement('li');
             deepAllPlayLi.className = 'toc-item';
