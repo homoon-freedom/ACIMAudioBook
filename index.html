@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>오디오북:기적수업</title>
-    <!-- 프리텐다드(Pretendard) 웹폰트 로드 -->
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
     <style>
         :root {
@@ -60,7 +59,6 @@
             font-weight: 700;
         }
 
-        /* 메인 탭 메뉴 스타일 */
         .tab-menu {
             display: flex;
             gap: 6px;
@@ -103,7 +101,6 @@
             display: block;
         }
 
-        /* 모달창 내부 서브 탭 스타일 */
         .modal-tab-menu {
             display: flex;
             gap: 6px;
@@ -290,7 +287,6 @@
             transform: scale(1.05);
         }
 
-        /* 플로팅 메뉴 버튼 및 하단 바 스타일 */
         .menu-fab {
             position: fixed;
             bottom: calc(20px + env(safe-area-inset-bottom));
@@ -555,14 +551,13 @@
             color: #4A5568;
         }
 
-        /* 관련 교과서 제목 텍스트 스타일 */
         .related-item span.related-title-text {
             font-size: 15px;
             font-weight: 500;
             color: #4A5568;
             cursor: pointer;
             transition: color 0.2s;
-            padding: 5px 0; /* 터치 영역 확보 */
+            padding: 5px 0; 
         }
 
         .related-item span.related-title-text:hover {
@@ -570,7 +565,6 @@
             text-decoration: underline;
         }
 
-        /* 커스텀 오디오 플레이어 스타일 */
         .custom-audio-player {
             background: #E2E8F0;
             border-radius: 12px;
@@ -622,7 +616,6 @@
             background: #235A96;
         }
 
-        /* 북마크 버튼 스타일 */
         .bookmark-btn {
             position: absolute;
             right: 0;
@@ -874,7 +867,6 @@
             <h1>기적수업 오디오북</h1>
         </div>
 
-        <!-- 탭 메뉴 -->
         <div class="tab-menu">
             <button class="tab-btn active" data-target="tab-textbook">교과서</button>
             <button class="tab-btn" data-target="tab-wb1">연습서 1부</button>
@@ -882,7 +874,6 @@
             <button class="tab-btn" data-target="tab-appendix">부록</button>
         </div>
 
-        <!-- 탭 내용 영역 -->
         <div id="tab-textbook" class="tab-content active">
             <ul class="toc-list" id="toc-list-textbook"></ul>
         </div>
@@ -897,10 +888,8 @@
         </div>
     </div>
 
-    <!-- 메뉴 열기 톱니바퀴 버튼 -->
     <button id="menu-fab" class="menu-fab" title="편집 메뉴 열기">⚙️</button>
 
-    <!-- 하단 고정 편집 바 (기본 닫힘) -->
     <div class="bottom-edit-bar hidden" id="bottom-edit-bar">
         <div class="bar-header">
             <span class="bar-title">편집 및 백업 도구</span>
@@ -922,7 +911,6 @@
         </div>
     </div>
 
-    <!-- 읽기 전용 이북(eBook) 모달 -->
     <div class="modal-overlay" id="read-modal-overlay">
         <div class="modal fullscreen-ebook">
             <div class="sticky-header-container">
@@ -931,7 +919,6 @@
                     <button class="close-btn" id="close-read-modal" title="닫기">&times;</button>
                 </div>
                 
-                <!-- 커스텀 오디오 플레이어 -->
                 <div class="custom-audio-player">
                     <audio id="read-audio-player" style="display: none;"></audio>
                     <div class="audio-controls-row">
@@ -941,7 +928,6 @@
                         <button class="audio-ctrl-btn" id="audio-stop-btn" title="정지">⏹</button>
                         <button class="audio-ctrl-btn" id="audio-forward-btn" title="10초 앞으로">⏩</button>
                         
-                        <!-- 북마크 버튼 -->
                         <button class="bookmark-btn" id="bookmark-jump-btn" title="저장된 북마크로 이동">📌</button>
                     </div>
                     <div class="audio-progress-row">
@@ -980,7 +966,6 @@
         </div>
     </div>
 
-    <!-- 일반(교과서 등) 편집 모달 -->
     <div class="modal-overlay" id="edit-modal-overlay">
         <div class="modal fullscreen-ebook">
             <div class="sticky-header-container">
@@ -1020,7 +1005,6 @@
         </div>
     </div>
 
-    <!-- 연습서 전용 편집 모달 -->
     <div class="modal-overlay" id="wb-edit-modal-overlay">
         <div class="modal fullscreen-ebook">
             <div class="sticky-header-container">
@@ -1105,13 +1089,14 @@
                 sublist: [
                     {
                         title: "기적수업 서문",
-                        playlist: ["audio_1_1.mp3", "audio_1_2.mp3", "audio_1_3.mp3"] // 연속 재생을 위한 플레이리스트 추가
+                        playlist: ["audio_1_1.mp3", "audio_1_2.mp3", "audio_1_3.mp3"] 
                     },
                     "교과서 서문",
                     {
                         title: "제1장 기적의 의미",
                         playlist: ["audio_5_1.mp3", "audio_5_2.mp3", "audio_6.mp3", "audio_7.mp3", "audio_8.mp3", "audio_9.mp3", "audio_10.mp3", "audio_11.mp3"],
                         sublist: [
+                            // 여기서 sublist를 완전히 제외하고 playlist만 지정하여 우측에 버튼이 나타나게 합니다.
                             {
                                 title: "T-1.I. 기적의 원리",
                                 playlist: ["audio_5_1.mp3", "audio_5_2.mp3"]
@@ -1477,7 +1462,6 @@
         let workbookChapters = [];
         let textbookChapters = [];
 
-        // 플레이리스트 제어용 변수
         let currentPlaylist = [];
         let currentPlaylistIndex = 0;
 
@@ -1520,7 +1504,7 @@
             const title = isObject ? subItem.title : subItem;
             const rangeMatch = typeof title === 'string' ? title.match(/(\d+)(?:과)?\s*~\s*(\d+)과/) : null;
             const hasSublistFolder = isObject && subItem.sublist;
-            const hasPlaylist = isObject && subItem.playlist; // 플레이리스트가 있는지 확인
+            const hasPlaylist = isObject && subItem.playlist; 
 
             const li = document.createElement('li');
 
@@ -1539,7 +1523,6 @@
                 const allPlayId = `audio_${getNextIndex()}`;
                 const allPlayTitle = `${title} (전체 듣기)`;
                 
-                // 폴더 자체에 playlist가 정의되어 있으면 이를 적용하고, 없으면 기본 단일 파일로 설정
                 if (subItem.playlist) {
                     editableChapters.push({ id: allPlayId, title: allPlayTitle, playlist: subItem.playlist, section: sectionName });
                 } else {
@@ -1759,7 +1742,6 @@
                     const deepId = `audio_${getNextIndex()}`;
                     const fullTitle = `${parentTitle} > ${subItem.title} > ${deepItem}`;
                     
-                    // 깊은 뎁스의 객체 내 playlist 지원 (필요시 확장)
                     if (typeof deepItem === 'object' && deepItem !== null && deepItem.playlist) {
                         editableChapters.push({ id: deepId, title: fullTitle, playlist: deepItem.playlist, section: sectionName });
                     } else {
@@ -1796,7 +1778,6 @@
 
         buildTOC();
 
-        // 메인 탭 전환
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1807,7 +1788,6 @@
             });
         });
 
-        // 모달창 탭 전환
         document.querySelectorAll('.modal-tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const parentBody = e.target.closest('.ebook-body') || e.target.closest('.fullscreen-edit-body');
@@ -1976,7 +1956,6 @@
             document.getElementById('wb-edit-modal-overlay').style.display = 'none';
         });
 
-        // ------------------ 커스텀 오디오 및 북마크 제어 로직 ------------------
         const readModalOverlay = document.getElementById('read-modal-overlay');
         const readAudioPlayer = document.getElementById('read-audio-player');
         const playBtnEl = document.getElementById('audio-play-btn');
@@ -2013,18 +1992,16 @@
             }
         });
 
-        // 북마크 버튼 클릭 시 저장된 위치로 점프 (플레이리스트 대응 수정)
         bookmarkBtnEl.addEventListener('click', () => {
             if (currentOpenedReadId) {
                 let savedTime = localStorage.getItem(currentOpenedReadId + "_bookmark_time");
                 if (savedTime === null) {
-                    savedTime = localStorage.getItem(currentOpenedReadId + "_bookmark"); // 하위 호환성
+                    savedTime = localStorage.getItem(currentOpenedReadId + "_bookmark"); 
                 }
                 const savedIndex = localStorage.getItem(currentOpenedReadId + "_bookmark_index") || 0;
 
                 if (savedTime !== null) {
                     const targetIndex = parseInt(savedIndex);
-                    // 플레이리스트를 지원하는 파일이고, 현재 인덱스가 저장된 북마크 인덱스와 다른 경우
                     if (currentPlaylist.length > 1 && targetIndex !== currentPlaylistIndex) {
                         currentPlaylistIndex = targetIndex;
                         readAudioPlayer.src = `audio/${currentPlaylist[currentPlaylistIndex]}`;
@@ -2043,7 +2020,6 @@
             }
         });
 
-        // 재생 중 0.5초마다 현재 위치 자동 북마크 저장 (플레이리스트 대응 수정)
         readAudioPlayer.addEventListener('timeupdate', () => {
             if (!isNaN(readAudioPlayer.duration) && readAudioPlayer.duration > 0) {
                 const percent = (readAudioPlayer.currentTime / readAudioPlayer.duration) * 100;
@@ -2052,7 +2028,6 @@
                 currentTimeEl.textContent = formatTime(readAudioPlayer.currentTime);
                 durationEl.textContent = formatTime(readAudioPlayer.duration);
 
-                // 현재 위치 및 플레이리스트 인덱스 자동 기록
                 if (currentOpenedReadId && readAudioPlayer.currentTime > 0) {
                     localStorage.setItem(currentOpenedReadId + "_bookmark_time", readAudioPlayer.currentTime);
                     localStorage.setItem(currentOpenedReadId + "_bookmark_index", currentPlaylistIndex);
@@ -2083,7 +2058,6 @@
             updateInlinePlayButtons();
         });
 
-        // 플레이리스트 재생 지원: 파일이 끝났을 때 배열 다음 요소 재생
         readAudioPlayer.addEventListener('ended', () => {
             if (currentPlaylist.length > 0 && currentPlaylistIndex < currentPlaylist.length - 1) {
                 currentPlaylistIndex++;
@@ -2098,19 +2072,17 @@
             }
         });
 
-        // openReadModal 함수: 이전 모달 기록(keepHistory)을 유지할지 결정
         async function openReadModal(title, id, keepHistory = false) {
             if (!keepHistory) {
-                modalHistory = []; // 메인 목차 등에서 바로 열 때는 이전 기록 초기화
+                modalHistory = []; 
             }
 
-            // 모달창 닫기 버튼을 UX에 맞게 '뒤로가기' 또는 '닫기'로 표시
             const closeBtn = document.getElementById('close-read-modal');
             if (modalHistory.length > 0) {
-                closeBtn.innerHTML = '&#8592;'; // ← 기호 (뒤로 가기)
+                closeBtn.innerHTML = '&#8592;'; 
                 closeBtn.title = '이전 창으로 돌아가기';
             } else {
-                closeBtn.innerHTML = '&times;'; // × 기호 (닫기)
+                closeBtn.innerHTML = '&times;'; 
                 closeBtn.title = '닫기';
             }
 
@@ -2186,7 +2158,6 @@
                                 </div>
                             `;
                             
-                            // 클릭 시 현재 상태를 히스토리에 넣고 새 모달을 엽니다.
                             div.querySelector('.related-title-text').addEventListener('click', () => {
                                 const currentTitle = document.getElementById('read-modal-title').textContent;
                                 modalHistory.push({ title: currentTitle, id: currentOpenedReadId });
@@ -2226,7 +2197,6 @@
             }
         });
 
-        // 플레이리스트 배열을 인식하도록 로드 함수 수정
         function loadAudio(id) {
             const chapterObj = editableChapters.find(c => c.id === id);
             if (chapterObj) {
@@ -2421,7 +2391,6 @@
         document.getElementById('restore-note-input').addEventListener('change', (e) => handleRestore(e, false));
         document.getElementById('restore-summary-input').addEventListener('change', (e) => handleRestore(e, true));
 
-        // 모달창 닫기 버튼 이벤트: 히스토리가 있으면 이전 창으로, 없으면 아예 닫음
         document.getElementById('close-read-modal').addEventListener('click', () => {
             if (modalHistory.length > 0) {
                 const prev = modalHistory.pop();
@@ -2432,7 +2401,6 @@
             }
         });
 
-        // 바탕화면(배경) 클릭 이벤트: 히스토리가 있으면 이전 창으로, 없으면 아예 닫음
         window.addEventListener('click', (e) => {
             if (e.target === readModalOverlay) {
                 if (modalHistory.length > 0) {
@@ -2454,7 +2422,6 @@
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2500);
         }
 
-        // 하단 바 숨기기 / 보이기 토글 로직
         const bottomEditBar = document.getElementById('bottom-edit-bar');
         const menuFab = document.getElementById('menu-fab');
         const closeBarBtn = document.getElementById('close-bar-btn');
