@@ -1115,8 +1115,21 @@
                         title: "제2장 분리와 속죄",
                         sublist: [
                             "T-2.I. 분리의 기원", "T-2.II. 방어로서의 속죄", "T-2.III. 하나님의 제단",
-                            "T-2.IV. 두려움으로부터 해방인 치유", "T-2.V. 기적을 행하는 자의 역할", "T-2.V.A. 기적을 행하는 자가 알아야 할 특별한 원리",
-                            "T-2.VI. 두려움과 갈등", "T-2.VII. 원인과 결과", "T-2.VIII. 최후의 심판의 의미"
+                            "T-2.IV. 두려움으로부터 해방인 치유", 
+                            {
+                                title: "T-2.V. 기적을 행하는 자의 역할",
+                                playlist: ["audio_18_1.mp3", "audio_18_2.mp3"]
+                            }, 
+                            "T-2.V.A. 기적을 행하는 자가 알아야 할 특별한 원리",
+                            {
+                                title: "T-2.VI. 두려움과 갈등",
+                                playlist: ["audio_20_1.mp3", "audio_20_2.mp3"]
+                            },
+                            {
+                                title: "T-2.VII. 원인과 결과",
+                                playlist: ["audio_21_1.mp3", "audio_21_2.mp3"]
+                            }, 
+                            "T-2.VIII. 최후의 심판의 의미"
                         ]
                     },
                     {
@@ -1552,7 +1565,6 @@
                 subListUl.appendChild(allPlayLi);
 
                 subItem.sublist.forEach((nestedItem, nestedIdx) => {
-                    // 수정된 부분: sublist 속성이 있는 객체만 하위 폴더(renderDeepSubItem)로 처리
                     if (typeof nestedItem === 'object' && nestedItem !== null && nestedItem.sublist) {
                         renderDeepSubItem(nestedItem, nestedIdx, subListUl, getNextIndex, title, sectionName);
                     } else {
