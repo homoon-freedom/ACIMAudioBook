@@ -585,7 +585,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
+            gap: 6px;
         }
 
         .audio-ctrl-btn {
@@ -619,28 +619,6 @@
         }
         .audio-ctrl-btn.main-play:hover {
             background: #235A96;
-        }
-
-        /* 북마크 버튼 스타일 */
-        .bookmark-btn {
-            position: absolute;
-            right: 0;
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 6px 10px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #2B6CB0;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: background 0.15s;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .bookmark-btn:hover {
-            background: #EBF8FF;
         }
 
         .audio-progress-row {
@@ -927,7 +905,7 @@
                 
                 <div class="custom-audio-player">
                     <audio id="read-audio-player" style="display: none;"></audio>
-                    <div class="audio-controls-row" style="gap: 6px;">
+                    <div class="audio-controls-row">
                         <button class="audio-ctrl-btn" id="audio-prev-track-btn" title="이전 음성">⏮</button>
                         <button class="audio-ctrl-btn" id="audio-backward-btn" title="10초 뒤로">⏪</button>
                         <button class="audio-ctrl-btn" id="audio-play-btn" title="재생">▶</button>
@@ -935,8 +913,6 @@
                         <button class="audio-ctrl-btn" id="audio-stop-btn" title="정지">⏹</button>
                         <button class="audio-ctrl-btn" id="audio-forward-btn" title="10초 앞으로">⏩</button>
                         <button class="audio-ctrl-btn" id="audio-next-track-btn" title="다음 음성">⏭</button>
-                        
-                        <button class="bookmark-btn" id="bookmark-jump-btn" title="저장된 북마크로 이동">📌</button>
                     </div>
                     <div class="audio-progress-row">
                         <span class="audio-time" id="audio-current-time">00:00</span>
@@ -2048,7 +2024,6 @@
         const forwardBtnEl = document.getElementById('audio-forward-btn');
         const nextTrackBtnEl = document.getElementById('audio-next-track-btn');
         
-        const bookmarkBtnEl = document.getElementById('bookmark-jump-btn');
         const currentTimeEl = document.getElementById('audio-current-time');
         const durationEl = document.getElementById('audio-duration');
         const progressBarEl = document.getElementById('audio-progress-bar');
@@ -2113,34 +2088,6 @@
             }
         });
 
-        bookmarkBtnEl.addEventListener('click', () => {
-            if (currentOpenedReadId) {
-                let savedTime = localStorage.getItem(currentOpenedReadId + "_bookmark_time");
-                if (savedTime === null) {
-                    savedTime = localStorage.getItem(currentOpenedReadId + "_bookmark"); 
-                }
-                const savedIndex = localStorage.getItem(currentOpenedReadId + "_bookmark_index") || 0;
-
-                if (savedTime !== null) {
-                    const targetIndex = parseInt(savedIndex);
-                    if (currentPlaylist.length > 1 && targetIndex !== currentPlaylistIndex) {
-                        currentPlaylistIndex = targetIndex;
-                        readAudioPlayer.src = `audio/${currentPlaylist[currentPlaylistIndex]}`;
-                        readAudioPlayer.onloadedmetadata = () => {
-                            readAudioPlayer.currentTime = parseFloat(savedTime);
-                            readAudioPlayer.play();
-                            readAudioPlayer.onloadedmetadata = null;
-                        };
-                    } else {
-                        readAudioPlayer.currentTime = parseFloat(savedTime);
-                    }
-                    showToast(`${formatTime(parseFloat(savedTime))} 북마크로 이동했습니다.`);
-                } else {
-                    showToast("저장된 북마크가 없습니다.");
-                }
-            }
-        });
-
         readAudioPlayer.addEventListener('timeupdate', () => {
             if (!isNaN(readAudioPlayer.duration) && readAudioPlayer.duration > 0) {
                 const percent = (readAudioPlayer.currentTime / readAudioPlayer.duration) * 100;
@@ -2148,11 +2095,6 @@
                 progressSliderEl.value = percent;
                 currentTimeEl.textContent = formatTime(readAudioPlayer.currentTime);
                 durationEl.textContent = formatTime(readAudioPlayer.duration);
-
-                if (currentOpenedReadId && readAudioPlayer.currentTime > 0) {
-                    localStorage.setItem(currentOpenedReadId + "_bookmark_time", readAudioPlayer.currentTime);
-                    localStorage.setItem(currentOpenedReadId + "_bookmark_index", currentPlaylistIndex);
-                }
             }
         });
 
@@ -2558,3 +2500,4 @@
     </script>
 </body>
 </html>
+
