@@ -2384,16 +2384,18 @@
             const jsonData = JSON.stringify(backupData, null, 2);
             const date = new Date();
             const dateStr = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
-            const typeStr = isSummary ? "나의정리" : "본문";
-            const fileName = `기적수업_오디오북_${typeStr}_백업_${dateStr}.json`;
+            
+            // 파일명 형식 변경: 날짜_본문.json 또는 날짜_정리.json
+            const typeStr = isSummary ? "정리" : "본문";
+            const fileName = `${dateStr}_${typeStr}.json`;
 
             const file = new File([jsonData], fileName, { type: 'application/json' });
 
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
+                    // title 등의 텍스트 속성을 제거하고 순수하게 파일 객체만 전달
                     await navigator.share({
-                        files: [file],
-                        title: `기적수업 오디오북 ${typeStr} 백업`
+                        files: [file]
                     });
                     showToast(`${typeStr} 공유가 완료되었습니다.`);
                 } catch (error) {
@@ -2406,7 +2408,6 @@
                 downloadBackup(jsonData, fileName);
             }
         }
-
         function downloadBackup(jsonData, fileName) {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(jsonData);
             const downloadAnchor = document.createElement('a');
