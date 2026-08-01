@@ -585,7 +585,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
             position: relative;
         }
 
@@ -928,12 +927,14 @@
                 
                 <div class="custom-audio-player">
                     <audio id="read-audio-player" style="display: none;"></audio>
-                    <div class="audio-controls-row">
+                    <div class="audio-controls-row" style="gap: 6px;">
+                        <button class="audio-ctrl-btn" id="audio-prev-track-btn" title="이전 음성">⏮</button>
                         <button class="audio-ctrl-btn" id="audio-backward-btn" title="10초 뒤로">⏪</button>
                         <button class="audio-ctrl-btn" id="audio-play-btn" title="재생">▶</button>
                         <button class="audio-ctrl-btn" id="audio-pause-btn" title="일시정지" style="display: none;">⏸</button>
                         <button class="audio-ctrl-btn" id="audio-stop-btn" title="정지">⏹</button>
                         <button class="audio-ctrl-btn" id="audio-forward-btn" title="10초 앞으로">⏩</button>
+                        <button class="audio-ctrl-btn" id="audio-next-track-btn" title="다음 음성">⏭</button>
                         
                         <button class="bookmark-btn" id="bookmark-jump-btn" title="저장된 북마크로 이동">📌</button>
                     </div>
@@ -2038,11 +2039,15 @@
 
         const readModalOverlay = document.getElementById('read-modal-overlay');
         const readAudioPlayer = document.getElementById('read-audio-player');
+        
+        const prevTrackBtnEl = document.getElementById('audio-prev-track-btn');
         const playBtnEl = document.getElementById('audio-play-btn');
         const pauseBtnEl = document.getElementById('audio-pause-btn');
         const stopBtnEl = document.getElementById('audio-stop-btn');
         const backwardBtnEl = document.getElementById('audio-backward-btn');
         const forwardBtnEl = document.getElementById('audio-forward-btn');
+        const nextTrackBtnEl = document.getElementById('audio-next-track-btn');
+        
         const bookmarkBtnEl = document.getElementById('bookmark-jump-btn');
         const currentTimeEl = document.getElementById('audio-current-time');
         const durationEl = document.getElementById('audio-duration');
@@ -2069,6 +2074,42 @@
         forwardBtnEl.addEventListener('click', () => {
             if (!isNaN(readAudioPlayer.duration)) {
                 readAudioPlayer.currentTime = Math.min(readAudioPlayer.duration, readAudioPlayer.currentTime + 10);
+            }
+        });
+        
+        prevTrackBtnEl.addEventListener('click', () => {
+            if (currentPlaylist.length > 1) {
+                if (currentPlaylistIndex > 0) {
+                    currentPlaylistIndex--;
+                    readAudioPlayer.src = `audio/${currentPlaylist[currentPlaylistIndex]}`;
+                    readAudioPlayer.play().catch(() => {
+                        alert(`오디오 파일을 찾거나 재생할 수 없습니다.\n파일 이름: audio/${currentPlaylist[currentPlaylistIndex]}`);
+                    });
+                    showToast(`${currentPlaylistIndex + 1}번째 음성을 재생합니다.`);
+                } else {
+                    readAudioPlayer.currentTime = 0;
+                    showToast("첫 번째 음성입니다.");
+                }
+            } else {
+                readAudioPlayer.currentTime = 0;
+                showToast("단일 파일입니다.");
+            }
+        });
+
+        nextTrackBtnEl.addEventListener('click', () => {
+            if (currentPlaylist.length > 1) {
+                if (currentPlaylistIndex < currentPlaylist.length - 1) {
+                    currentPlaylistIndex++;
+                    readAudioPlayer.src = `audio/${currentPlaylist[currentPlaylistIndex]}`;
+                    readAudioPlayer.play().catch(() => {
+                        alert(`오디오 파일을 찾거나 재생할 수 없습니다.\n파일 이름: audio/${currentPlaylist[currentPlaylistIndex]}`);
+                    });
+                    showToast(`${currentPlaylistIndex + 1}번째 음성을 재생합니다.`);
+                } else {
+                    showToast("마지막 음성입니다.");
+                }
+            } else {
+                showToast("단일 파일입니다.");
             }
         });
 
@@ -2384,8 +2425,6 @@
             const jsonData = JSON.stringify(backupData, null, 2);
             const date = new Date();
             const dateStr = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
-            
-            // 파일명 형식 변경: 날짜_본문.json 또는 날짜_정리.json
             const typeStr = isSummary ? "정리" : "본문";
             const fileName = `${dateStr}_${typeStr}.json`;
 
@@ -2393,7 +2432,6 @@
 
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
-                    // title 등의 텍스트 속성을 제거하고 순수하게 파일 객체만 전달
                     await navigator.share({
                         files: [file]
                     });
@@ -2408,6 +2446,7 @@
                 downloadBackup(jsonData, fileName);
             }
         }
+
         function downloadBackup(jsonData, fileName) {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(jsonData);
             const downloadAnchor = document.createElement('a');
