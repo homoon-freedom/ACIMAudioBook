@@ -2430,8 +2430,8 @@ playlist: ["audio_119_1.mp3", "audio_119_2.mp3"]
             const formatNoteContent = (text) => {
                 let processedText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 processedText = processedText.replace(/(["“”])([^\s"“”][^"“”]*?[^\s"“”]|[^\s"“”])(["“”])/g, '<span style="display: block; text-align: center; color: #38A169;">$1<span style="font-weight: 500; font-style: italic;">$2</span>$3</span>');
-                processedText = processedText.replace(/(['‘])([^\s'‘’][^'‘’]*?[^\s'‘’]|[^\s'‘’])(['’])/g, '<span style="color: #3182CE;">$1$2$3</span>');
-                processedText = processedText.replace(/([\(（])([^)）]+)([\)）])/g, '<span style="font-weight: 600; color: #38A169;">$1$2$3</span>');
+                processedText = processedText.replace(/(['‘])([^\s'‘’][^'‘’]*?[^\s'‘’]|[^\s'‘’])(['’])/g, '<span style="font-weight: 600; color: #3182CE;">$1$2$3</span>');
+                processedText = processedText.replace(/([\(（])([^)）]+)([\)）])/g, '<span style="color: #38A169;">$1$2$3</span>');
                 
                 let lines = processedText.split('\n');
                 lines = lines.map(line => {
@@ -2450,7 +2450,7 @@ playlist: ["audio_119_1.mp3", "audio_119_2.mp3"]
                         return `<span style="font-size:1.1em; font-weight: 600;">${cleanedLine}</span>`;
                     }
                     
-       d             return line;
+                    return line;
                 });
                 return lines.join('<br>');
             };
