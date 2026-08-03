@@ -70,23 +70,31 @@
             border-radius: 12px;
         }
 
-        .tab-btn {
-            flex: 1;
-            padding: 12px 8px;
-            border: none;
-            background: transparent;
-            font-size: 15px;
-            font-weight: 600;
-            color: #4A5568;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-            word-break: keep-all;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        /* 기존 .tab-btn 스타일에서 flex: 1; 제거 */
+.tab-btn {
+    /* flex: 1; 이 줄을 삭제하거나 아래와 같이 덮어씌웁니다 */
+    padding: 12px 4px;
+    border: none;
+    background: transparent;
+    font-size: 14px; /* 폭이 좁아진 탭에 맞춰 폰트 크기 미세 조정 (선택사항) */
+    font-weight: 600;
+    color: #4A5568;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    word-break: keep-all;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 각 탭별 폭 비율 지정 (20%, 30%, 30%, 20%) */
+.tab-btn:nth-child(1) { flex: 0 0 20%; } /* 교과서 */
+.tab-btn:nth-child(2) { flex: 0 0 30%; } /* 연습서 1부 (또는 연습서1부) */
+.tab-btn:nth-child(3) { flex: 0 0 30%; } /* 연습서 2부 */
+.tab-btn:nth-child(4) { flex: 0 0 20%; } /* 부록 */
+
 
         .tab-btn:hover {
             color: var(--primary-color);
