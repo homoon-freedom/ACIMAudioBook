@@ -83,6 +83,9 @@
             transition: all 0.2s;
             text-align: center;
             word-break: keep-all;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .tab-btn:hover {
@@ -183,6 +186,18 @@
             flex-grow: 1;
             padding: 5px 0;
             padding-right: 15px; 
+            display: flex;
+            align-items: center;
+        }
+
+        .toc-check-icon {
+            font-size: 12px;
+            margin-right: 6px;
+            color: #38A169;
+            display: inline-block;
+            width: 14px;
+            text-align: center;
+            flex-shrink: 0;
         }
 
         .toc-item:not(.toc-header) .toc-title {
@@ -409,6 +424,12 @@
             padding: 0 4px;
             word-break: keep-all;
         }
+
+        .rst-btn {
+            flex: 0 0 42px !important;
+            background-color: #E53E3E !important; 
+            font-size: 14px;
+        }
         
         .bottom-edit-bar button:active, .bottom-edit-bar label:active { transform: scale(0.98); }
         .bottom-edit-bar button:hover, .bottom-edit-bar label:hover { opacity: 0.9; }
@@ -471,6 +492,35 @@
             justify-content: space-between;
             align-items: center;
             padding-bottom: 10px;
+        }
+
+        .modal-title-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-check-btn {
+            background: none;
+            border: 2px solid #CBD5E0;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: transparent;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            padding: 0;
+        }
+
+        .modal-check-btn.checked {
+            background-color: #38A169;
+            border-color: #38A169;
+            color: white;
         }
 
         .modal-title {
@@ -549,20 +599,13 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         
-        .related-item span {
-            font-size: 15px;
-            font-weight: 500;
-            color: #4A5568;
-        }
-
-        /* 관련 교과서 제목 텍스트 스타일 */
         .related-item span.related-title-text {
             font-size: 15px;
             font-weight: 500;
             color: #4A5568;
             cursor: pointer;
             transition: color 0.2s;
-            padding: 5px 0; /* 터치 영역 확보 */
+            padding: 5px 0;
         }
 
         .related-item span.related-title-text:hover {
@@ -882,10 +925,12 @@
         
         <div class="bottom-bar-row">
             <button id="open-general-edit-btn" class="btn-general-edit">일반편집</button>
+            <button id="reset-general-btn" class="btn-general-edit rst-btn" title="교과서 진행상황 초기화">RST</button>
             <button id="open-wb-edit-btn" class="btn-wb-edit">연습서편집</button>
+            <button id="reset-wb-btn" class="btn-wb-edit rst-btn" title="연습서 진행상황 초기화">RST</button>
         </div>
         <div class="bottom-bar-row">
-            <button id="backup-note-btn" class="btn-backup-note">본문백업</button>
+            <button id="backup-note-btn" class="btn-backup-note" title="본문, 관련 항목 및 완료 체크 포함">본문백업</button>
             <label for="restore-note-input" class="btn-restore-note">본문복원</label>
             <input type="file" id="restore-note-input" accept=".json" style="display: none;">
             
@@ -899,7 +944,10 @@
         <div class="modal fullscreen-ebook">
             <div class="sticky-header-container">
                 <div class="modal-header">
-                    <h2 class="modal-title" id="read-modal-title">제목</h2>
+                    <div class="modal-title-group">
+                        <button id="modal-check-btn" class="modal-check-btn" title="진행 상황 완료 체크">✔️</button>
+                        <h2 class="modal-title" id="read-modal-title">제목</h2>
+                    </div>
                     <button class="close-btn" id="close-read-modal" title="닫기">&times;</button>
                 </div>
                 
@@ -1065,6 +1113,11 @@
                 return `<span style="display:inline-block; width: 30px; flex-shrink:0;">${match[1]}</span><span style="flex-grow:1;">${match[2]}</span>`;
             }
             return `<span style="flex-grow:1;">${title}</span>`;
+        }
+
+        function getCheckIconHtml(id) {
+            const isChecked = localStorage.getItem(id + "_checked") === 'true';
+            return `<span class="toc-check-icon" id="check-icon-${id}">${isChecked ? '✔️' : ''}</span>`;
         }
 
         const tocData = [
@@ -1553,6 +1606,9 @@
                     }
                 }
             });
+            
+            // 최초 로드 시 폴더 및 탭 아이콘 업데이트
+            updateAllChecks();
         }
 
         function renderSubItem(subItem, subIdx, parentIndex, parentUl, getNextIndex, sectionName) {
@@ -1570,7 +1626,10 @@
                 const titleContainer = document.createElement('div');
                 titleContainer.className = 'folder-title-container';
                 titleContainer.innerHTML = `
-                    <div class="folder-title">${formatTitleText(title)}</div>
+                    <div class="folder-title" style="display:flex; align-items:center;">
+                        <span class="toc-check-icon folder-check-icon"></span>
+                        <div style="flex-grow:1; display:flex; align-items:center;">${formatTitleText(title)}</div>
+                    </div>
                     <span class="folder-arrow" style="color:#A0AEC0; font-size:12px; margin-left:10px; flex-shrink:0;">▼</span>
                 `;
 
@@ -1587,11 +1646,14 @@
                 }
 
                 const allPlayLi = document.createElement('li');
-                allPlayLi.className = 'toc-item';
+                allPlayLi.className = 'toc-item ignore-auto-check';
                 allPlayLi.style.paddingLeft = "30px";
                 allPlayLi.style.backgroundColor = "#EBF8FF";
                 allPlayLi.innerHTML = `
-                    <div class="toc-title" style="font-weight: 600; color: var(--primary-color);">🎧 전체 듣기</div>
+                    <div class="toc-title" style="font-weight: 600; color: var(--primary-color); display:flex; align-items:center;">
+                        ${getCheckIconHtml(allPlayId)}
+                        <div style="flex-grow:1;">🎧 전체 듣기</div>
+                    </div>
                     <div class="btn-group-right">
                         <button class="play-btn" data-id="${allPlayId}" title="재생 / 일시정지">▶</button>
                         <button class="reset-btn" data-id="${allPlayId}" title="처음부터 다시 듣기">↺</button>
@@ -1620,7 +1682,10 @@
                         itemLi.className = 'toc-item';
                         itemLi.style.paddingLeft = "30px";
                         itemLi.innerHTML = `
-                            <div class="toc-title">${formatTitleText(itemTitle)}</div>
+                            <div class="toc-title" style="display:flex; align-items:center;">
+                                ${getCheckIconHtml(deepId)}
+                                <div style="flex-grow:1; display:flex; align-items:center;">${formatTitleText(itemTitle)}</div>
+                            </div>
                             <div class="btn-group-right">
                                 <button class="play-btn" data-id="${deepId}" title="재생 / 일시정지">▶</button>
                                 <button class="reset-btn" data-id="${deepId}" title="처음부터 다시 듣기">↺</button>
@@ -1649,7 +1714,10 @@
                 const titleContainer = document.createElement('div');
                 titleContainer.className = 'folder-title-container';
                 titleContainer.innerHTML = `
-                    <div class="folder-title">${title}</div>
+                    <div class="folder-title" style="display:flex; align-items:center;">
+                        <span class="toc-check-icon folder-check-icon"></span>
+                        <div style="flex-grow:1;">${title}</div>
+                    </div>
                     <span class="folder-arrow" style="color:#A0AEC0; font-size:12px; margin-left:10px; flex-shrink:0;">▼</span>
                 `;
                 
@@ -1694,7 +1762,10 @@
                         preLi.className = 'toc-item';
                         preLi.style.paddingLeft = "30px";
                         preLi.innerHTML = `
-                            <div class="toc-title" style="font-weight: 600; color: #4A5568;">${itemTitle}</div>
+                            <div class="toc-title" style="font-weight: 600; color: #4A5568; display:flex; align-items:center;">
+                                ${getCheckIconHtml(itemId)}
+                                <div style="flex-grow:1;">${itemTitle}</div>
+                            </div>
                             <div class="btn-group-right">
                                 <button class="play-btn" data-id="${itemId}" title="재생 / 일시정지">▶</button>
                                 <button class="reset-btn" data-id="${itemId}" title="처음부터 다시 듣기">↺</button>
@@ -1722,7 +1793,10 @@
                     subLi.className = 'toc-item';
                     subLi.style.paddingLeft = "30px";
                     subLi.innerHTML = `
-                        <div class="toc-title">${lessonTitle}</div>
+                        <div class="toc-title" style="display:flex; align-items:center;">
+                            ${getCheckIconHtml(lessonId)}
+                            <div style="flex-grow:1;">${lessonTitle}</div>
+                        </div>
                         <div class="btn-group-right">
                             <button class="play-btn" data-id="${lessonId}" title="재생 / 일시정지">▶</button>
                             <button class="reset-btn" data-id="${lessonId}" title="처음부터 다시 듣기">↺</button>
@@ -1752,7 +1826,10 @@
                 
                 li.className = 'toc-item';
                 li.innerHTML = `
-                    <div class="toc-title">${formatTitleText(title)}</div>
+                    <div class="toc-title" style="display:flex; align-items:center;">
+                        ${getCheckIconHtml(subId)}
+                        <div style="flex-grow:1; display:flex; align-items:center;">${formatTitleText(title)}</div>
+                    </div>
                     <div class="btn-group-right">
                         <button class="play-btn" data-id="${subId}" title="재생 / 일시정지">▶</button>
                         <button class="reset-btn" data-id="${subId}" title="처음부터 다시 듣기">↺</button>
@@ -1773,7 +1850,10 @@
             nestedTitleContainer.className = 'folder-title-container';
             nestedTitleContainer.style.paddingLeft = "30px";
             nestedTitleContainer.innerHTML = `
-                <div class="folder-title">${formatTitleText(subItem.title)}</div>
+                <div class="folder-title" style="display:flex; align-items:center;">
+                    <span class="toc-check-icon folder-check-icon"></span>
+                    <div style="flex-grow:1; display:flex; align-items:center;">${formatTitleText(subItem.title)}</div>
+                </div>
                 <span class="folder-arrow" style="color:#A0AEC0; font-size:12px; margin-left:10px; flex-shrink:0;">▼</span>
             `;
 
@@ -1790,11 +1870,14 @@
             }
 
             const deepAllPlayLi = document.createElement('li');
-            deepAllPlayLi.className = 'toc-item';
+            deepAllPlayLi.className = 'toc-item ignore-auto-check';
             deepAllPlayLi.style.paddingLeft = "55px";
             deepAllPlayLi.style.backgroundColor = "#EBF8FF";
             deepAllPlayLi.innerHTML = `
-                <div class="toc-title" style="font-weight: 600; color: var(--primary-color);">🎧 전체 듣기</div>
+                <div class="toc-title" style="font-weight: 600; color: var(--primary-color); display:flex; align-items:center;">
+                    ${getCheckIconHtml(deepAllPlayId)}
+                    <div style="flex-grow:1;">🎧 전체 듣기</div>
+                </div>
                 <div class="btn-group-right">
                     <button class="play-btn" data-id="${deepAllPlayId}" title="재생 / 일시정지">▶</button>
                     <button class="reset-btn" data-id="${deepAllPlayId}" title="처음부터 다시 듣기">↺</button>
@@ -1820,7 +1903,10 @@
                     itemLi.className = 'toc-item';
                     itemLi.style.paddingLeft = "55px";
                     itemLi.innerHTML = `
-                        <div class="toc-title">${formatTitleText(typeof deepItem === 'object' ? deepItem.title : deepItem)}</div>
+                        <div class="toc-title" style="display:flex; align-items:center;">
+                            ${getCheckIconHtml(deepId)}
+                            <div style="flex-grow:1; display:flex; align-items:center;">${formatTitleText(typeof deepItem === 'object' ? deepItem.title : deepItem)}</div>
+                        </div>
                         <div class="btn-group-right">
                             <button class="play-btn" data-id="${deepId}" title="재생 / 일시정지">▶</button>
                             <button class="reset-btn" data-id="${deepId}" title="처음부터 다시 듣기">↺</button>
@@ -1842,6 +1928,86 @@
             nestedLi.appendChild(nestedTitleContainer);
             nestedLi.appendChild(nestedSubListUl);
             parentUl.appendChild(nestedLi);
+        }
+
+        // 전체 폴더 및 상단 탭 자동 체크 확인 로직
+        function updateAllChecks() {
+            // 1. 하위 폴더부터 먼저 판별하기 위해 깊이(depth) 계산 후 정렬 (Bottom-up 방식)
+            const folders = Array.from(document.querySelectorAll('.folder-item'));
+            const getDepth = (el) => {
+                let depth = 0;
+                let parent = el.parentElement;
+                while (parent) {
+                    if (parent.classList && parent.classList.contains('folder-item')) depth++;
+                    parent = parent.parentElement;
+                }
+                return depth;
+            };
+            folders.sort((a, b) => getDepth(b) - getDepth(a));
+
+            folders.forEach(folder => {
+                const subList = folder.querySelector(':scope > .sub-list');
+                if (!subList) return;
+
+                // 전체듣기(ignore-auto-check)를 제외한 모든 체크 가능 항목 추출
+                const checkableItems = Array.from(subList.children).filter(li => {
+                    return li.classList.contains('toc-item') && !li.classList.contains('ignore-auto-check');
+                });
+
+                if (checkableItems.length === 0) return;
+
+                const allChecked = checkableItems.every(li => {
+                    if (li.classList.contains('folder-item')) {
+                        const icon = li.querySelector(':scope > .folder-title-container .folder-check-icon');
+                        return icon && icon.textContent.includes('✔️');
+                    } else {
+                        const icon = li.querySelector('.toc-check-icon');
+                        return icon && icon.textContent.includes('✔️');
+                    }
+                });
+
+                const folderIcon = folder.querySelector(':scope > .folder-title-container .folder-check-icon');
+                if (folderIcon) {
+                    folderIcon.textContent = allChecked ? '✔️' : '';
+                }
+            });
+
+            // 2. 최상위 탭(대분류) 체크 상태 판별
+            document.querySelectorAll('.tab-btn').forEach(tabBtn => {
+                const targetId = tabBtn.getAttribute('data-target');
+                const targetContent = document.getElementById(targetId);
+                if (!targetContent) return;
+
+                const rootList = targetContent.querySelector('.toc-list');
+                if (!rootList) return;
+
+                const checkableItems = Array.from(rootList.children).filter(li => {
+                    return li.classList.contains('toc-item') && !li.classList.contains('ignore-auto-check');
+                });
+
+                if (checkableItems.length === 0) return;
+
+                const allChecked = checkableItems.every(li => {
+                    if (li.classList.contains('folder-item')) {
+                        const icon = li.querySelector(':scope > .folder-title-container .folder-check-icon');
+                        return icon && icon.textContent.includes('✔️');
+                    } else {
+                        const icon = li.querySelector('.toc-check-icon');
+                        return icon && icon.textContent.includes('✔️');
+                    }
+                });
+
+                let iconSpan = tabBtn.querySelector('.tab-check-icon');
+                if (!iconSpan) {
+                    iconSpan = document.createElement('span');
+                    iconSpan.className = 'tab-check-icon';
+                    iconSpan.style.color = '#38A169';
+                    iconSpan.style.marginRight = '4px';
+                    iconSpan.style.fontSize = '14px';
+                    tabBtn.insertBefore(iconSpan, tabBtn.firstChild);
+                }
+                iconSpan.textContent = allChecked ? '✔️' : '';
+            });
         }
 
         buildTOC();
@@ -2024,6 +2190,35 @@
             document.getElementById('wb-edit-modal-overlay').style.display = 'none';
         });
 
+        // 리셋(RST) 버튼 클릭 이벤트
+        document.getElementById('reset-general-btn').addEventListener('click', () => {
+            if (confirm("교과서 및 부록의 모든 학습 진행상황(체크 표시)을 초기화하시겠습니까?\n(작성하신 노트는 삭제되지 않습니다.)")) {
+                editableChapters.forEach(ch => {
+                    if (ch.section === "교과서" || ch.section === "부록") {
+                        localStorage.removeItem(ch.id + "_checked");
+                        const iconEl = document.getElementById(`check-icon-${ch.id}`);
+                        if (iconEl) iconEl.textContent = '';
+                    }
+                });
+                updateAllChecks(); // 리셋 후 폴더 및 탭 아이콘 갱신
+                showToast("교과서 및 부록 진행상황이 초기화되었습니다.");
+            }
+        });
+
+        document.getElementById('reset-wb-btn').addEventListener('click', () => {
+            if (confirm("연습서의 모든 학습 진행상황(체크 표시)을 초기화하시겠습니까?\n(작성하신 노트는 삭제되지 않습니다.)")) {
+                editableChapters.forEach(ch => {
+                    if (ch.section === "연습서 1부" || ch.section === "연습서 2부") {
+                        localStorage.removeItem(ch.id + "_checked");
+                        const iconEl = document.getElementById(`check-icon-${ch.id}`);
+                        if (iconEl) iconEl.textContent = '';
+                    }
+                });
+                updateAllChecks(); // 리셋 후 폴더 및 탭 아이콘 갱신
+                showToast("연습서 진행상황이 초기화되었습니다.");
+            }
+        });
+
         const readModalOverlay = document.getElementById('read-modal-overlay');
         const readAudioPlayer = document.getElementById('read-audio-player');
         
@@ -2146,6 +2341,31 @@
             }
         });
 
+        // 모달창 상단 체크(완료) 버튼 클릭 이벤트
+        document.getElementById('modal-check-btn').addEventListener('click', () => {
+            if (!currentOpenedReadId) return;
+            
+            const isChecked = localStorage.getItem(currentOpenedReadId + "_checked") === 'true';
+            const newState = !isChecked;
+            
+            if (newState) {
+                localStorage.setItem(currentOpenedReadId + "_checked", "true");
+                document.getElementById('modal-check-btn').classList.add('checked');
+            } else {
+                localStorage.removeItem(currentOpenedReadId + "_checked");
+                document.getElementById('modal-check-btn').classList.remove('checked');
+            }
+            
+            // 바깥 목차(TOC) 아이콘 즉시 업데이트
+            const iconEl = document.getElementById(`check-icon-${currentOpenedReadId}`);
+            if (iconEl) {
+                iconEl.textContent = newState ? '✔️' : '';
+            }
+            
+            // 전체 폴더 및 대분류 체크 상태 다시 계산
+            updateAllChecks();
+        });
+
         async function openReadModal(title, id, keepHistory = false) {
             if (!keepHistory) {
                 modalHistory = []; 
@@ -2162,6 +2382,15 @@
 
             document.getElementById('read-modal-title').textContent = title;
             currentOpenedReadId = id;
+            
+            // 모달을 열 때 체크 상태 복구
+            const checkBtn = document.getElementById('modal-check-btn');
+            if (localStorage.getItem(id + "_checked") === 'true') {
+                checkBtn.classList.add('checked');
+            } else {
+                checkBtn.classList.remove('checked');
+            }
+
             returnAudioBtn.style.display = 'none';
             resetModalTabs('#read-modal-overlay');
             
@@ -2367,6 +2596,7 @@
                 const key = localStorage.key(i);
                 if (key.startsWith('audio_')) {
                     const isSummaryKey = key.endsWith('_summary');
+                    // 본문 백업 시: _note, _rel1, _rel2, _rel3, _checked 등이 모두 포함됨
                     if (isSummary && isSummaryKey) {
                         backupData[key] = localStorage.getItem(key);
                     } else if (!isSummary && !isSummaryKey) {
@@ -2428,8 +2658,8 @@
                         throw new Error("올바른 백업 파일 형식이 아닙니다.");
                     }
 
-                    const typeStr = isSummary ? "나의 정리" : "본문 노트와 연결 정보";
-                    if (confirm(`기존에 저장된 ${typeStr}가 백업 파일의 내용으로 덮어씌워집니다. 진행하시겠습니까?`)) {
+                    const typeStr = isSummary ? "나의 정리" : "본문 노트, 연결 정보 및 체크 진행상황";
+                    if (confirm(`기존에 저장된 ${typeStr}이(가) 백업 파일의 내용으로 덮어씌워집니다. 진행하시겠습니까?`)) {
                         
                         const keysToRemove = [];
                         for (let i = 0; i < localStorage.length; i++) {
@@ -2450,6 +2680,7 @@
                         }
 
                         showToast("성공적으로 복원되었습니다.");
+                        // 복원 직후 화면 갱신 시 최상단 폴더 아이콘 등 새로 계산 
                         setTimeout(() => location.reload(), 1000);
                     }
                 } catch (err) {
