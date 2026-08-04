@@ -2470,16 +2470,17 @@
                 noteEl.textContent = "작성된 노트가 없습니다.";
                 noteEl.style.color = "#A0AEC0";
             }
+const savedSummary = localStorage.getItem(id + "_summary");
+const summaryEl = document.getElementById('read-summary-content');
+if (savedSummary && savedSummary.trim() !== "") {
+    // replace(/>/g, '') 를 추가하여 '>' 문자를 모두 제거한 뒤 출력합니다.
+    summaryEl.textContent = savedSummary.replace(/>/g, '');
+    summaryEl.style.color = "#2D3748";
+} else {
+    summaryEl.textContent = "작성된 정리가 없습니다.";
+    summaryEl.style.color = "#A0AEC0";
+}
 
-            const savedSummary = localStorage.getItem(id + "_summary");
-            const summaryEl = document.getElementById('read-summary-content');
-            if (savedSummary && savedSummary.trim() !== "") {
-                summaryEl.textContent = savedSummary;
-                summaryEl.style.color = "#2D3748";
-            } else {
-                summaryEl.textContent = "작성된 정리가 없습니다.";
-                summaryEl.style.color = "#A0AEC0";
-            }
             
             const relatedSection = document.getElementById('read-related-section');
             const relatedList = document.getElementById('related-list');
