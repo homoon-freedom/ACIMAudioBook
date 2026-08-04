@@ -144,14 +144,11 @@
             margin-bottom: 0;
         }
         
-        /* 👇 여기에 아래 코드를 추가해 주세요 👇 */
         .fullscreen-edit-body .modal-tab-menu {
             flex-grow: 0;
             flex-shrink: 0;
         }
-
         
-        /* 📌 편집창 및 모달 탭 버튼 높이 슬림하게 조정 */
         .modal-tab-btn {
             flex: 1;
             padding: 7px 8px;
@@ -516,6 +513,7 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            overflow: hidden;
         }
 
         .modal {
@@ -539,6 +537,21 @@
             max-height: 95vh;
             padding: 0;
             overflow: hidden; 
+            position: relative;
+        }
+
+        /* 📌 오버랩 슬라이드 효과를 위한 래퍼 컨테이너 */
+        .modal-content-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            display: flex;
+            flex-direction: column;
+            will-change: transform, box-shadow;
+            box-shadow: 0 0 25px rgba(0,0,0,0.15);
         }
 
         .sticky-header-container {
@@ -1073,62 +1086,64 @@
     </div>
 
     <div class="modal-overlay" id="read-modal-overlay">
-        <div class="modal fullscreen-ebook">
-            <div class="sticky-header-container">
-                <div class="modal-header">
-                    <div class="modal-title-group">
-                        <button id="modal-check-btn" class="modal-check-btn" title="진행 상황 완료 체크">✔️</button>
-                        <h2 class="modal-title" id="read-modal-title">제목</h2>
-                    </div>
-                    <button class="close-btn" id="close-read-modal" title="닫기">&times;</button>
-                </div>
-                
-                <div class="custom-audio-player">
-                    <audio id="read-audio-player" style="display: none;"></audio>
-                    <div class="audio-controls-row">
-                        <button class="audio-ctrl-btn" id="audio-prev-track-btn" title="이전 음성">⏮</button>
-                        <button class="audio-ctrl-btn" id="audio-backward-btn" title="10초 뒤로">⏪</button>
-                        <button class="audio-ctrl-btn" id="audio-play-btn" title="재생">▶</button>
-                        <button class="audio-ctrl-btn" id="audio-pause-btn" title="일시정지" style="display: none;">⏸</button>
-                        <button class="audio-ctrl-btn" id="audio-stop-btn" title="정지">⏹</button>
-                        <button class="audio-ctrl-btn" id="audio-forward-btn" title="10초 앞으로">⏩</button>
-                        <button class="audio-ctrl-btn" id="audio-next-track-btn" title="다음 음성">⏭</button>
-                    </div>
-                    <div class="audio-progress-row">
-                        <span class="audio-time" id="audio-current-time">00:00</span>
-                        <div class="audio-progress-container">
-                            <div class="audio-progress-bar" id="audio-progress-bar"></div>
-                            <input type="range" class="audio-progress-slider" id="audio-progress-slider" value="0" min="0" max="100" step="0.1">
+        <div class="modal fullscreen-ebook" id="read-modal-box">
+            <div class="modal-content-wrapper" id="modal-content-wrapper">
+                <div class="sticky-header-container">
+                    <div class="modal-header">
+                        <div class="modal-title-group">
+                            <button id="modal-check-btn" class="modal-check-btn" title="진행 상황 완료 체크">✔️</button>
+                            <h2 class="modal-title" id="read-modal-title">제목</h2>
                         </div>
-                        <span class="audio-time" id="audio-duration">00:00</span>
+                        <button class="close-btn" id="close-read-modal" title="닫기">&times;</button>
+                    </div>
+                    
+                    <div class="custom-audio-player">
+                        <audio id="read-audio-player" style="display: none;"></audio>
+                        <div class="audio-controls-row">
+                            <button class="audio-ctrl-btn" id="audio-prev-track-btn" title="이전 음성">⏮</button>
+                            <button class="audio-ctrl-btn" id="audio-backward-btn" title="10초 뒤로">⏪</button>
+                            <button class="audio-ctrl-btn" id="audio-play-btn" title="재생">▶</button>
+                            <button class="audio-ctrl-btn" id="audio-pause-btn" title="일시정지" style="display: none;">⏸</button>
+                            <button class="audio-ctrl-btn" id="audio-stop-btn" title="정지">⏹</button>
+                            <button class="audio-ctrl-btn" id="audio-forward-btn" title="10초 앞으로">⏩</button>
+                            <button class="audio-ctrl-btn" id="audio-next-track-btn" title="다음 음성">⏭</button>
+                        </div>
+                        <div class="audio-progress-row">
+                            <span class="audio-time" id="audio-current-time">00:00</span>
+                            <div class="audio-progress-container">
+                                <div class="audio-progress-bar" id="audio-progress-bar"></div>
+                                <input type="range" class="audio-progress-slider" id="audio-progress-slider" value="0" min="0" max="100" step="0.1">
+                            </div>
+                            <span class="audio-time" id="audio-duration">00:00</span>
+                        </div>
+                    </div>
+
+                    <!-- 📌 스크롤 시 항상 상단에 고정되는 탭 메뉴 및 편집 버튼 영역 -->
+                    <div class="modal-tab-wrapper">
+                        <div class="modal-tab-menu">
+                            <button class="modal-tab-btn active" data-target="read-tab-note">본문내용</button>
+                            <button class="modal-tab-btn" data-target="read-tab-summary">나의 정리</button>
+                        </div>
+                        <button id="modal-inline-edit-btn" class="modal-inline-edit-btn">편집</button>
                     </div>
                 </div>
 
-                <!-- 📌 스크롤 시 항상 상단에 고정되는 탭 메뉴 및 편집 버튼 영역 -->
-                <div class="modal-tab-wrapper">
-                    <div class="modal-tab-menu">
-                        <button class="modal-tab-btn active" data-target="read-tab-note">본문내용</button>
-                        <button class="modal-tab-btn" data-target="read-tab-summary">나의 정리</button>
+                <div class="ebook-body">
+                    <div id="read-tab-note" class="modal-tab-content active">
+                        <div id="read-note-content" class="ebook-text">작성된 노트가 없습니다.</div>
                     </div>
-                    <button id="modal-inline-edit-btn" class="modal-inline-edit-btn">편집</button>
-                </div>
-            </div>
-
-            <div class="ebook-body">
-                <div id="read-tab-note" class="modal-tab-content active">
-                    <div id="read-note-content" class="ebook-text">작성된 노트가 없습니다.</div>
-                </div>
-                
-                <div id="read-tab-summary" class="modal-tab-content">
-                    <div id="read-summary-content" class="ebook-text">작성된 정리가 없습니다.</div>
-                </div>
-                
-                <div id="read-related-section" class="related-section" style="display: none;">
-                    <h3>
-                        📖 함께 읽으면 좋은 교과서
-                        <button id="return-audio-btn" class="return-audio-btn">본문 오디오로 복귀</button>
-                    </h3>
-                    <div id="related-list"></div>
+                    
+                    <div id="read-tab-summary" class="modal-tab-content">
+                        <div id="read-summary-content" class="ebook-text">작성된 정리가 없습니다.</div>
+                    </div>
+                    
+                    <div id="read-related-section" class="related-section" style="display: none;">
+                        <h3>
+                            📖 함께 읽으면 좋은 교과서
+                            <button id="return-audio-btn" class="return-audio-btn">본문 오디오로 복귀</button>
+                        </h3>
+                        <div id="related-list"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2578,7 +2593,25 @@
             }
         });
 
-        async function openReadModal(title, id, keepHistory = false) {
+        async function openReadModal(title, id, keepHistory = false, slideAnim = null) {
+            const wrapper = document.getElementById('modal-content-wrapper');
+
+            // 📌 오버랩 슬라이드 나가는 애니메이션
+            if (slideAnim) {
+                wrapper.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease';
+                if (slideAnim === 'left') {
+                    // 왼쪽(다음)으로 쓸어넘길 때: 현재 창은 왼쪽(-100%)으로 완전히 덮으며 퇴장
+                    wrapper.style.transform = 'translateX(-100%)';
+                    wrapper.style.boxShadow = '-15px 0 30px rgba(0,0,0,0.2)';
+                } else if (slideAnim === 'right') {
+                    // 오른쪽(이전)으로 쓸어넘길 때: 현재 창은 오른쪽(100%)으로 완전히 덮으며 퇴장
+                    wrapper.style.transform = 'translateX(100%)';
+                    wrapper.style.boxShadow = '15px 0 30px rgba(0,0,0,0.2)';
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
             if (!keepHistory) {
                 modalHistory = []; 
             }
@@ -2742,6 +2775,30 @@
             }
             readModalOverlay.style.display = 'flex';
             readModalOverlay.querySelector('.ebook-body').scrollTop = 0;
+
+            // 📌 오버랩 슬라이드 들어오는 애니메이션 (반대편에서 넘어와 덮어씀)
+            if (slideAnim) {
+                wrapper.style.transition = 'none';
+                if (slideAnim === 'left') {
+                    // 왼쪽(다음)으로 쓸어넘길 때: 새로운 창이 오른쪽(100%)에서 시작해 왼쪽으로 덮으며 진입
+                    wrapper.style.transform = 'translateX(100%)';
+                    wrapper.style.boxShadow = '-15px 0 30px rgba(0,0,0,0.2)';
+                } else if (slideAnim === 'right') {
+                    // 오른쪽(이전)으로 쓸어넘길 때: 새로운 창이 왼쪽(-100%)에서 시작해 오른쪽으로 덮으며 진입
+                    wrapper.style.transform = 'translateX(-100%)';
+                    wrapper.style.boxShadow = '15px 0 30px rgba(0,0,0,0.2)';
+                }
+
+                requestAnimationFrame(() => {
+                    wrapper.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease';
+                    wrapper.style.transform = 'translateX(0)';
+                    wrapper.style.boxShadow = '0 0 25px rgba(0,0,0,0.15)';
+                });
+            } else {
+                wrapper.style.transition = 'none';
+                wrapper.style.transform = 'translateX(0)';
+                wrapper.style.boxShadow = '0 0 25px rgba(0,0,0,0.15)';
+            }
         }
 
         returnAudioBtn.addEventListener('click', () => {
@@ -2906,9 +2963,6 @@
             showToast("기기에서 공유를 지원하지 않아 파일로 다운로드되었습니다.");
         }
 
-        document.getElementById('backup-note-btn').addEventListener('click', () => handleBackup(false));
-        document.getElementById('backup-summary-btn').addEventListener('click', () => handleBackup(true));
-
         function handleRestore(event, isSummary) {
             const file = event.target.files[0];
             if (!file) return;
@@ -3025,6 +3079,88 @@
             bottomEditBar.classList.remove('hidden');
             menuFab.classList.add('hidden');
         });
+
+        // ==========================================
+        // 📌 오버랩 드래그 & 슬라이드 인터랙션 (방향 매칭)
+        // ==========================================
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let currentX = 0;
+        let isSwiping = false;
+        const modalContentWrapper = document.getElementById('modal-content-wrapper');
+
+        readModalOverlay.addEventListener('touchstart', (e) => {
+            if (!currentOpenedReadId) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isSwiping = true;
+            modalContentWrapper.style.transition = 'none';
+        }, { passive: true });
+
+        readModalOverlay.addEventListener('touchmove', (e) => {
+            if (!isSwiping) return;
+            currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            
+            const xDiff = currentX - touchStartX;
+            const yDiff = Math.abs(currentY - touchStartY);
+
+            if (Math.abs(xDiff) > yDiff) {
+                modalContentWrapper.style.transform = `translateX(${xDiff}px)`;
+                modalContentWrapper.style.boxShadow = xDiff > 0 ? '15px 0 30px rgba(0,0,0,0.2)' : '-15px 0 30px rgba(0,0,0,0.2)';
+            }
+        }, { passive: true });
+
+        readModalOverlay.addEventListener('touchend', (e) => {
+            if (!isSwiping) return;
+            isSwiping = false;
+
+            const xDiff = currentX - touchStartX;
+            const threshold = window.innerWidth * 0.25;
+
+            modalContentWrapper.style.transition = 'transform 0.1s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease';
+
+            if (xDiff > threshold) {
+                // 오른쪽으로 쓸어넘길 때 -> 이전 장 요청 ('right' 애니메이션: 왼쪽에서 새창이 넘어옴)
+                modalContentWrapper.style.transform = `translateX(100%)`;
+                setTimeout(() => {
+                    navigateChapter(-1, 'right');
+                }, 50);
+            } else if (xDiff < -threshold) {
+                // 왼쪽으로 쓸어넘길 때 -> 다음 장 요청 ('left' 애니메이션: 오른쪽에서 새창이 넘어옴)
+                modalContentWrapper.style.transform = `translateX(-100%)`;
+                setTimeout(() => {
+                    navigateChapter(1, 'left');
+                }, 50);
+            } else {
+                // 취소 시 제자리 복귀
+                modalContentWrapper.style.transform = 'translateX(0)';
+                modalContentWrapper.style.boxShadow = '0 0 25px rgba(0,0,0,0.15)';
+            }
+        }, { passive: true });
+
+        function navigateChapter(direction, animType) {
+            const currentIndex = editableChapters.findIndex(ch => ch.id === currentOpenedReadId);
+            if (currentIndex === -1) return;
+
+            let nextIndex = currentIndex + direction;
+            
+            while (nextIndex >= 0 && nextIndex < editableChapters.length) {
+                if (!editableChapters[nextIndex].title.includes("(전체 듣기)")) {
+                    break;
+                }
+                nextIndex += direction;
+            }
+
+            if (nextIndex >= 0 && nextIndex < editableChapters.length) {
+                const nextChapter = editableChapters[nextIndex];
+                openReadModal(nextChapter.title, nextChapter.id, false, animType);
+            } else {
+                modalContentWrapper.style.transform = 'translateX(0)';
+                modalContentWrapper.style.boxShadow = '0 0 25px rgba(0,0,0,0.15)';
+                showToast(direction > 0 ? "마지막 항목입니다." : "첫 번째 항목입니다.");
+            }
+        }
     </script>
 </body>
 </html>
