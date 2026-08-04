@@ -1085,6 +1085,7 @@
         </div>
     </div>
 
+    <!-- 읽기 모달 -->
     <div class="modal-overlay" id="read-modal-overlay">
         <div class="modal fullscreen-ebook" id="read-modal-box">
             <div class="modal-content-wrapper" id="modal-content-wrapper">
@@ -1123,6 +1124,7 @@
                         <div class="modal-tab-menu">
                             <button class="modal-tab-btn active" data-target="read-tab-note">본문내용</button>
                             <button class="modal-tab-btn" data-target="read-tab-summary">나의 정리</button>
+                            <button class="modal-tab-btn" data-target="read-tab-practice">실천하기</button>
                         </div>
                         <button id="modal-inline-edit-btn" class="modal-inline-edit-btn">편집</button>
                     </div>
@@ -1137,6 +1139,10 @@
                         <div id="read-summary-content" class="ebook-text">작성된 정리가 없습니다.</div>
                     </div>
                     
+                    <div id="read-tab-practice" class="modal-tab-content">
+                        <div id="read-practice-content" class="ebook-text">작성된 실천하기가 없습니다.</div>
+                    </div>
+                    
                     <div id="read-related-section" class="related-section" style="display: none;">
                         <h3>
                             📖 함께 읽으면 좋은 교과서
@@ -1149,6 +1155,7 @@
         </div>
     </div>
 
+    <!-- 일반 편집 모달 -->
     <div class="modal-overlay" id="edit-modal-overlay">
         <div class="modal fullscreen-ebook">
             <div class="sticky-header-container">
@@ -1188,6 +1195,7 @@
         </div>
     </div>
 
+    <!-- 연습서 편집 모달 -->
     <div class="modal-overlay" id="wb-edit-modal-overlay">
         <div class="modal fullscreen-ebook">
             <div class="sticky-header-container">
@@ -1210,6 +1218,7 @@
                 <div class="modal-tab-menu">
                     <button class="modal-tab-btn active" data-target="wb-tab-note">본문내용</button>
                     <button class="modal-tab-btn" data-target="wb-tab-summary">나의 정리</button>
+                    <button class="modal-tab-btn" data-target="wb-tab-practice">실천하기</button>
                 </div>
 
                 <div id="wb-tab-note" class="modal-tab-content active">
@@ -1218,6 +1227,10 @@
                 
                 <div id="wb-tab-summary" class="modal-tab-content">
                     <textarea id="wb-summary-textarea" class="wb-textarea" placeholder="여기에 나의 정리를 작성하세요... (백업/복원 시 분리되어 관리됩니다)"></textarea>
+                </div>
+
+                <div id="wb-tab-practice" class="modal-tab-content">
+                    <textarea id="wb-practice-textarea" class="wb-textarea" placeholder="여기에 실천할 내용을 작성하세요... (백업/복원 시 정리 데이터와 함께 관리됩니다)"></textarea>
                 </div>
                 
                 <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
@@ -1250,6 +1263,24 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-save-wb" id="save-wb-btn">저장하기</button>
+                <button class="btn" style="background-color: #805AD5; color: white;" id="gemini-btn">제미나이</button>
+                <button class="btn" style="background-color: #4A5568; color: white;" id="copy-btn">복사하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 제미나이 모달 -->
+    <div class="modal-overlay" id="gemini-modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" style="color: #805AD5;">✨ 제미나이 질문 작성</h2>
+                <button class="close-btn" id="close-gemini-modal">&times;</button>
+            </div>
+            <div style="display: flex; flex-direction: column; flex-grow: 1;">
+                <textarea id="gemini-prompt-textarea" placeholder="제미나이에게 물어볼 질문이나 프롬프트를 작성하세요..." style="flex-grow: 1; min-height: 400px; padding: 15px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 15px; resize: none;"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-save-wb" id="save-gemini-btn">적용하기</button>
             </div>
         </div>
     </div>
@@ -1590,7 +1621,7 @@
                         sublist: [
                             "T-25.in. 서문", "T-25.I. 진리로의 연결 고리", "T-25.II. 어둠에서 건져내는 구원자",
                             "T-25.III. 지각과 선택", "T-25.IV. 네가 가져오는 빛", "T-25.V. 무죄 상태",
-                            "T-25.VI. 특별한 기능", "T-25.VII. 구원의 반석", "T-25.VIII. 사랑으로 돌아온 정의", "T-25.IX. 천국의 정의正義"
+                            "T-25.VI. 단일한 기능", "T-25.VII. 구원의 반석", "T-25.VIII. 사랑으로 돌아온 정의", "T-25.IX. 천국의 정의正義"
                         ]
                     },
                     {
@@ -2361,6 +2392,7 @@
         function loadWbEditData() {
             document.getElementById('wb-note-textarea').value = localStorage.getItem(wbSelectedId + "_note") || "";
             document.getElementById('wb-summary-textarea').value = localStorage.getItem(wbSelectedId + "_summary") || "";
+            document.getElementById('wb-practice-textarea').value = localStorage.getItem(wbSelectedId + "_practice") || "";
             
             rel1Id = localStorage.getItem(wbSelectedId + "_rel1") || "";
             rel2Id = localStorage.getItem(wbSelectedId + "_rel2") || "";
@@ -2593,6 +2625,46 @@
             }
         });
 
+        // 📌 읽기 모드 '나의 정리'와 '실천하기' 공통 서식 렌더링 함수
+        function formatSummaryAndPracticeText(text) {
+            let processed = text.replace(/>/g, '').replace(/</g, '&lt;');
+            let lines = processed.split('\n');
+            let formattedLines = lines.map(line => {
+                let isBullet = false;
+                let isNumbered = false;
+                let textPart = line;
+
+                if (/^\s*\*/.test(line)) {
+                    isBullet = true;
+                    textPart = line.replace(/^\s*\*\s*/, ''); 
+                } else if (/^\s*\d+\./.test(line)) {
+                    isNumbered = true;
+                }
+                
+                textPart = textPart.replace(/\*/g, '');
+                textPart = textPart.replace(/(["“”])([^"“”]+)(["“”])/g, '<span style="color: #38A169; font-weight: 600; font-style: italic;">$1$2$3</span>');
+                textPart = textPart.replace(/(['‘’])([^'‘’]+)(['‘’])/g, '<span style="color: #3182CE; font-weight: 600;">$1$2$3</span>');
+
+                if (isBullet) {
+                    // 콜론(:)이 있는 경우, 첫 번째 콜론 이전 텍스트에 font-weight: 500 적용
+                    const colonIndex = textPart.indexOf(':');
+                    if (colonIndex !== -1) {
+                        const beforeColon = textPart.substring(0, colonIndex);
+                        const afterColon = textPart.substring(colonIndex);
+                        textPart = `<span style="font-weight: 500;">${beforeColon}</span>${afterColon}`;
+                    }
+                    
+                    textPart = '<span style="margin-left: 10px; margin-right: 6px; font-weight: bold;">•</span>' + textPart;
+                }
+                if (isNumbered) {
+                    textPart = '<span style="font-weight: 700;">' + textPart + '</span>';
+                }
+                
+                return textPart;
+            });
+            return formattedLines.join('<br>');
+        }
+
         async function openReadModal(title, id, keepHistory = false, slideAnim = null) {
             const wrapper = document.getElementById('modal-content-wrapper');
 
@@ -2672,47 +2744,28 @@
                 noteEl.style.color = "#A0AEC0";
             }
 
+            // 나의 정리 세팅 (공통 함수 사용)
             const savedSummary = localStorage.getItem(id + "_summary");
             const summaryEl = document.getElementById('read-summary-content');
             if (savedSummary && savedSummary.trim() !== "") {
-                let processedSummary = savedSummary.replace(/>/g, '');
-                processedSummary = processedSummary.replace(/</g, '&lt;');
-                
-                let lines = processedSummary.split('\n');
-                let formattedLines = lines.map(line => {
-                    let isBullet = false;
-                    let isNumbered = false;
-                    let textPart = line;
-
-                    if (/^\s*\*/.test(line)) {
-                        isBullet = true;
-                        textPart = line.replace(/^\s*\*\s*/, ''); 
-                    } else if (/^\s*\d+\./.test(line)) {
-                        isNumbered = true;
-                    }
-                    
-                    textPart = textPart.replace(/\*/g, '');
-
-                    textPart = textPart.replace(/(["“”])([^"“”]+)(["“”])/g, '<span style="color: #38A169; font-weight: 600; font-style: italic;">$1$2$3</span>');
-                    
-                    textPart = textPart.replace(/(['‘’])([^'‘’]+)(['‘’])/g, '<span style="color: #3182CE; font-weight: 600;">$1$2$3</span>');
-
-                    if (isBullet) {
-                        textPart = '<span style="margin-left: 10px; margin-right: 6px; font-weight: bold;">•</span>' + textPart;
-                    }
-                    
-                    if (isNumbered) {
-                        textPart = '<span style="font-weight: 700;">' + textPart + '</span>';
-                    }
-                    
-                    return textPart;
-                });
-
-                summaryEl.innerHTML = formattedLines.join('<br>');
+                summaryEl.innerHTML = formatSummaryAndPracticeText(savedSummary);
                 summaryEl.style.color = "#2D3748";
             } else {
                 summaryEl.textContent = "작성된 정리가 없습니다.";
                 summaryEl.style.color = "#A0AEC0";
+            }
+
+            // 실천하기 세팅 (공통 함수 사용)
+            const savedPractice = localStorage.getItem(id + "_practice");
+            const practiceEl = document.getElementById('read-practice-content');
+            if (practiceEl) { // 교과서 모드에서는 탭이 없으므로 확인
+                if (savedPractice && savedPractice.trim() !== "") {
+                    practiceEl.innerHTML = formatSummaryAndPracticeText(savedPractice);
+                    practiceEl.style.color = "#2D3748";
+                } else {
+                    practiceEl.textContent = "작성된 실천하기 내용이 없습니다.";
+                    practiceEl.style.color = "#A0AEC0";
+                }
             }
 
             const relatedSection = document.getElementById('read-related-section');
@@ -2888,13 +2941,16 @@
             }
         });
 
+        // 📌 연습서 편집: 저장, 제미나이, 복사 기능
         document.getElementById('save-wb-btn').addEventListener('click', () => {
             if (!wbSelectedId) return;
             const note = document.getElementById('wb-note-textarea').value;
             const summary = document.getElementById('wb-summary-textarea').value;
+            const practice = document.getElementById('wb-practice-textarea').value;
             
             localStorage.setItem(wbSelectedId + "_note", note);
             localStorage.setItem(wbSelectedId + "_summary", summary);
+            localStorage.setItem(wbSelectedId + "_practice", practice);
             localStorage.setItem(wbSelectedId + "_rel1", rel1Dropdown.getValue());
             localStorage.setItem(wbSelectedId + "_rel2", rel2Dropdown.getValue());
             localStorage.setItem(wbSelectedId + "_rel3", rel3Dropdown.getValue());
@@ -2907,12 +2963,51 @@
             }
         });
 
+        // 📌 제미나이 모달 열기 (글로벌 프롬프트 적용)
+        const geminiModal = document.getElementById('gemini-modal-overlay');
+        document.getElementById('gemini-btn').addEventListener('click', () => {
+            const savedPrompt = localStorage.getItem("global_gemini_prompt") || "";
+            document.getElementById('gemini-prompt-textarea').value = savedPrompt;
+            geminiModal.style.display = 'flex';
+        });
+
+        // 제미나이 모달 닫기
+        document.getElementById('close-gemini-modal').addEventListener('click', () => {
+            geminiModal.style.display = 'none';
+        });
+
+        // 📌 제미나이 모달 저장(적용) - 글로벌 프롬프트 적용
+        document.getElementById('save-gemini-btn').addEventListener('click', () => {
+            const prompt = document.getElementById('gemini-prompt-textarea').value;
+            localStorage.setItem("global_gemini_prompt", prompt);
+            geminiModal.style.display = 'none';
+            showToast("제미나이 질문이 저장되었습니다.");
+        });
+
+        // 📌 복사하기 기능 - 글로벌 프롬프트 적용
+        document.getElementById('copy-btn').addEventListener('click', () => {
+            const noteText = document.getElementById('wb-note-textarea').value;
+            const geminiText = localStorage.getItem("global_gemini_prompt") || document.getElementById('gemini-prompt-textarea').value; 
+            
+            const textToCopy = `[본문 내용]\n${noteText}\n\n[제미나이 질문]\n${geminiText}`;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showToast("복사되었습니다.");
+            }).catch(err => {
+                showCustomAlert("복사에 실패했습니다: " + err);
+            });
+        });
+
         async function handleBackup(isSummary) {
             const backupData = {};
+            // 글로벌 제미나이 프롬프트도 백업에 포함할 수 있습니다. (선택사항)
+            backupData["global_gemini_prompt"] = localStorage.getItem("global_gemini_prompt") || "";
+
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key.startsWith('audio_')) {
-                    const isSummaryKey = key.endsWith('_summary');
+                    // 실천하기(_practice)도 정리 데이터와 함께 묶어 백업합니다.
+                    const isSummaryKey = key.endsWith('_summary') || key.endsWith('_practice');
                     if (isSummary && isSummaryKey) {
                         backupData[key] = localStorage.getItem(key);
                     } else if (!isSummary && !isSummaryKey) {
@@ -2971,14 +3066,14 @@
                         throw new Error("올바른 백업 파일 형식이 아닙니다.");
                     }
 
-                    const typeStr = isSummary ? "나의 정리" : "본문 노트, 연결 정보 및 체크 진행상황";
+                    const typeStr = isSummary ? "나의 정리 및 실천하기" : "본문 노트, 연결 정보 및 체크 진행상황";
                     if (confirm(`기존에 저장된 ${typeStr}이(가) 백업 파일의 내용으로 덮어씌워집니다. 진행하시겠습니까?`)) {
                         
                         const keysToRemove = [];
                         for (let i = 0; i < localStorage.length; i++) {
                             const key = localStorage.key(i);
                             if (key.startsWith('audio_')) {
-                                const isSummaryKey = key.endsWith('_summary');
+                                const isSummaryKey = key.endsWith('_summary') || key.endsWith('_practice');
                                 if (isSummary && isSummaryKey) {
                                     keysToRemove.push(key);
                                 } else if (!isSummary && !isSummaryKey) {
@@ -3038,6 +3133,9 @@
                 if (currentOpenedReadId) {
                     openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
                 }
+            }
+            if (e.target === geminiModal) {
+                geminiModal.style.display = 'none';
             }
         });
 
