@@ -1647,16 +1647,18 @@
                 }
             });
 
-            editableChapters.forEach(ch => {
+                        editableChapters.forEach(ch => {
                 if (ch.section === "연습서 1부" || ch.section === "연습서 2부") {
                     workbookChapters.push(ch);
                 } else {
                     generalChapters.push(ch);
-                    if (ch.section === "교과서" && (ch.id.includes('_sub_') || ch.title.includes('장'))) {
+                    // 조건문에 '기적수업 서문'과 '교과서 서문'을 명시적으로 포함시킵니다.
+                    if (ch.section === "교과서" && (ch.id.includes('_sub_') || ch.title.includes('장') || ch.title.includes('기적수업 서문') || ch.title.includes('교과서 서문'))) {
                         textbookChapters.push(ch);
                     }
                 }
             });
+
             
             updateAllChecks();
         }
