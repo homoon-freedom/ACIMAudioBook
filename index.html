@@ -2470,11 +2470,56 @@
                 noteEl.textContent = "작성된 노트가 없습니다.";
                 noteEl.style.color = "#A0AEC0";
             }
+
 const savedSummary = localStorage.getItem(id + "_summary");
 const summaryEl = document.getElementById('read-summary-content');
 if (savedSummary && savedSummary.trim() !== "") {
-    // replace(/>/g, '') 를 추가하여 '>' 문자를 모두 제거한 뒤 출력합니다.
-    summaryEl.textContent = savedSummary.replace(/>/g, '');
+    // 1. 기존 요청: > 문자 제거
+    let processedSummary = savedSummary.replace(/>/g, '');
+    
+    // 2. 텍스트가 HTML 태그로 오작동하는 것을 방지하기 위해 < 이스케이프
+    processedSummary = processedSummary.replace(/</g, '&lt;');
+    
+    // 3. 줄 단위로 나누어 기호 및 따옴표 처리
+    let lines = processedSummary.split('\n');
+    let formattedLines = lines.map(line => {
+        let isBullet = false;
+        let isNumbered = false;
+        let textPart = line;
+
+        // 문장 시작(^)의 공백과 * 기호 확인
+        if (/^\s*\*/.test(line)) {
+            isBullet = true;
+            textPart = line.replace(/^\s*\*\s*/, ''); // 맨 앞의 * 기호와 공백 지우기
+        } else if (/^\s*\d+\./.test(line)) {
+            // 문장 시작이 숫자와 마침표(예: 1., 2.)로 시작하는지 확인
+            isNumbered = true;
+        }
+        
+        // 나머지 모든 * 기호 제거
+        textPart = textPart.replace(/\*/g, '');
+
+        // 4. 큰따옴표(" ", “ ”) 스타일 적용: 초록색, 굵기 600, 이탤릭
+        textPart = textPart.replace(/(["“”])([^"“”]+)(["“”])/g, '<span style="color: #38A169; font-weight: 600; font-style: italic;">$1$2$3</span>');
+        
+        // 5. 작은따옴표(' ', ‘ ’) 스타일 적용: 초록색, 굵기 600
+        textPart = textPart.replace(/(['‘’])([^'‘’]+)(['‘’])/g, '<span style="color: #3182CE; font-weight: 600;">$1$2$3</span>');
+
+        // 블릿 포인트인 경우 기호 추가
+        if (isBullet) {
+            textPart = '<span style="margin-left: 10px; margin-right: 6px; font-weight: bold;">•</span>' + textPart;
+        }
+        
+        // 숫자로 시작하는 문장인 경우 전체 줄을 굵기 700으로 감싸기
+        if (isNumbered) {
+            textPart = '<span style="font-weight: 700;">' + textPart + '</span>';
+        }
+        
+        return textPart;
+    });
+
+    // 6. innerHTML을 통해 줄바꿈(<br>)과 함께 렌더링
+    summaryEl.innerHTML = formattedLines.join('<br>');
     summaryEl.style.color = "#2D3748";
 } else {
     summaryEl.textContent = "작성된 정리가 없습니다.";
