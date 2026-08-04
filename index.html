@@ -2600,11 +2600,9 @@
             if (slideAnim) {
                 wrapper.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease';
                 if (slideAnim === 'left') {
-                    // 왼쪽(다음)으로 쓸어넘길 때: 현재 창은 왼쪽(-100%)으로 완전히 덮으며 퇴장
                     wrapper.style.transform = 'translateX(-100%)';
                     wrapper.style.boxShadow = '-15px 0 30px rgba(0,0,0,0.2)';
                 } else if (slideAnim === 'right') {
-                    // 오른쪽(이전)으로 쓸어넘길 때: 현재 창은 오른쪽(100%)으로 완전히 덮으며 퇴장
                     wrapper.style.transform = 'translateX(100%)';
                     wrapper.style.boxShadow = '15px 0 30px rgba(0,0,0,0.2)';
                 }
@@ -2776,15 +2774,13 @@
             readModalOverlay.style.display = 'flex';
             readModalOverlay.querySelector('.ebook-body').scrollTop = 0;
 
-            // 📌 오버랩 슬라이드 들어오는 애니메이션 (반대편에서 넘어와 덮어씀)
+            // 📌 오버랩 슬라이드 들어오는 애니메이션
             if (slideAnim) {
                 wrapper.style.transition = 'none';
                 if (slideAnim === 'left') {
-                    // 왼쪽(다음)으로 쓸어넘길 때: 새로운 창이 오른쪽(100%)에서 시작해 왼쪽으로 덮으며 진입
                     wrapper.style.transform = 'translateX(100%)';
                     wrapper.style.boxShadow = '-15px 0 30px rgba(0,0,0,0.2)';
                 } else if (slideAnim === 'right') {
-                    // 오른쪽(이전)으로 쓸어넘길 때: 새로운 창이 왼쪽(-100%)에서 시작해 오른쪽으로 덮으며 진입
                     wrapper.style.transform = 'translateX(-100%)';
                     wrapper.style.boxShadow = '15px 0 30px rgba(0,0,0,0.2)';
                 }
@@ -3081,7 +3077,7 @@
         });
 
         // ==========================================
-        // 📌 오버랩 드래그 & 슬라이드 인터랙션 (방향 매칭)
+        // 📌 오버랩 드래그 & 슬라이드 인터랙션 (수정된 버전)
         // ==========================================
         let touchStartX = 0;
         let touchStartY = 0;
@@ -3089,15 +3085,23 @@
         let isSwiping = false;
         const modalContentWrapper = document.getElementById('modal-content-wrapper');
 
-        readModalOverlay.addEventListener('touchstart', (e) => {
+        // 오버레이가 아닌 실제 모달 박스(또는 래퍼) 영역에서만 터치 시작 감지
+        modalContentWrapper.addEventListener('touchstart', (e) => {
             if (!currentOpenedReadId) return;
+            
+            // 입력창이나 버튼 등 터치 상호작용이 필요한 요소에서는 스와이프 방지
+            if (e.target.closest('textarea, button, input, .custom-audio-player')) {
+                isSwiping = false;
+                return;
+            }
+
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
             isSwiping = true;
             modalContentWrapper.style.transition = 'none';
         }, { passive: true });
 
-        readModalOverlay.addEventListener('touchmove', (e) => {
+        modalContentWrapper.addEventListener('touchmove', (e) => {
             if (!isSwiping) return;
             currentX = e.touches[0].clientX;
             const currentY = e.touches[0].clientY;
@@ -3105,35 +3109,36 @@
             const xDiff = currentX - touchStartX;
             const yDiff = Math.abs(currentY - touchStartY);
 
-            if (Math.abs(xDiff) > yDiff) {
+            // 가로로 명확하게 움직일 때만 창을 따라 움직이도록 처리 (세로 스크롤 방해 금지)
+            if (Math.abs(xDiff) > yDiff && Math.abs(xDiff) > 15) {
                 modalContentWrapper.style.transform = `translateX(${xDiff}px)`;
                 modalContentWrapper.style.boxShadow = xDiff > 0 ? '15px 0 30px rgba(0,0,0,0.2)' : '-15px 0 30px rgba(0,0,0,0.2)';
             }
         }, { passive: true });
 
-        readModalOverlay.addEventListener('touchend', (e) => {
+        modalContentWrapper.addEventListener('touchend', (e) => {
             if (!isSwiping) return;
             isSwiping = false;
 
             const xDiff = currentX - touchStartX;
+            const yDiff = Math.abs(e.changedTouches[0].clientY - touchStartY);
             const threshold = window.innerWidth * 0.25;
 
-            modalContentWrapper.style.transition = 'transform 0.1s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease';
+            modalContentWrapper.style.transition = 'transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease';
 
-            if (xDiff > threshold) {
-                // 오른쪽으로 쓸어넘길 때 -> 이전 장 요청 ('right' 애니메이션: 왼쪽에서 새창이 넘어옴)
-                modalContentWrapper.style.transform = `translateX(100%)`;
-                setTimeout(() => {
-                    navigateChapter(-1, 'right');
-                }, 50);
-            } else if (xDiff < -threshold) {
-                // 왼쪽으로 쓸어넘길 때 -> 다음 장 요청 ('left' 애니메이션: 오른쪽에서 새창이 넘어옴)
-                modalContentWrapper.style.transform = `translateX(-100%)`;
-                setTimeout(() => {
-                    navigateChapter(1, 'left');
-                }, 50);
+            // 수평 이동 거리가 세로보다 확실히 크고, 전체 화면의 25% 이상 밀었을 때만 페이지 전환
+            if (Math.abs(xDiff) > yDiff && Math.abs(xDiff) > threshold) {
+                if (xDiff > 0) {
+                    // 오른쪽으로 쓸어넘기기 -> 이전 장
+                    modalContentWrapper.style.transform = `translateX(100%)`;
+                    setTimeout(() => { navigateChapter(-1, 'right'); }, 50);
+                } else {
+                    // 왼쪽으로 쓸어넘기기 -> 다음 장
+                    modalContentWrapper.style.transform = `translateX(-100%)`;
+                    setTimeout(() => { navigateChapter(1, 'left'); }, 50);
+                }
             } else {
-                // 취소 시 제자리 복귀
+                // 스와이프 조건 미달 시 제자리 복귀
                 modalContentWrapper.style.transform = 'translateX(0)';
                 modalContentWrapper.style.boxShadow = '0 0 25px rgba(0,0,0,0.15)';
             }
