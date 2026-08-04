@@ -125,19 +125,36 @@
         }
 
         /* 모달창 내부 서브 탭 스타일 */
+        .modal-tab-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 15px;
+            margin-bottom: 0;
+            gap: 10px;
+            flex-shrink: 0;
+        }
         .modal-tab-menu {
             display: flex;
             gap: 6px;
-            margin-bottom: 15px;
             background: #EDF2F7;
             padding: 6px;
             border-radius: 12px;
-            flex-shrink: 0;
+            flex-grow: 1;
+            margin-bottom: 0;
         }
         
+        /* 👇 여기에 아래 코드를 추가해 주세요 👇 */
+        .fullscreen-edit-body .modal-tab-menu {
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
+
+        
+        /* 📌 편집창 및 모달 탭 버튼 높이 슬림하게 조정 */
         .modal-tab-btn {
             flex: 1;
-            padding: 10px 8px;
+            padding: 7px 8px;
             border: none;
             background: transparent;
             font-size: 14px;
@@ -153,6 +170,33 @@
             background: white;
             color: var(--primary-color);
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .modal-inline-edit-btn {
+            background-color: #38A169;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .modal-inline-edit-btn:hover {
+            background-color: #2F855A;
+            transform: scale(1.02);
+        }
+
+        .modal-inline-edit-btn:active {
+            transform: scale(0.98);
         }
         
         .modal-tab-content {
@@ -499,7 +543,7 @@
 
         .sticky-header-container {
             background: var(--modal-bg);
-            padding: 20px 25px 15px;
+            padding: 15px 20px 12px;
             border-bottom: 1px solid var(--border-color);
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             z-index: 20;
@@ -509,7 +553,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 10px;
+            padding-bottom: 5px;
         }
 
         .modal-title-group {
@@ -560,7 +604,7 @@
         .close-btn:hover { color: #4A5568; }
 
         .ebook-body {
-            padding: 30px 25px;
+            padding: 20px 25px 30px;
             overflow-y: auto;
             flex-grow: 1;
             background-color: #FAFCFF; 
@@ -637,10 +681,10 @@
         .custom-audio-player {
             background: #E2E8F0;
             border-radius: 12px;
-            padding: 12px 16px;
+            padding: 10px 16px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             margin-top: 5px;
         }
 
@@ -739,13 +783,13 @@
         }
 
         .fullscreen-edit-body {
-            padding: 25px;
+            padding: 20px 25px;
             overflow-y: auto;
             flex-grow: 1;
             background-color: #FAFCFF;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             box-sizing: border-box;
         }
 
@@ -907,7 +951,7 @@
             to {bottom: 0; opacity: 0;}
         }
 
-        /* 커스텀 알림창 스타일 (Font-weight 500, 크기 15px 적용) */
+        /* 커스텀 알림창 스타일 */
         .custom-alert-overlay {
             display: none;
             position: fixed;
@@ -932,8 +976,8 @@
 
         .custom-alert-message {
             padding: 25px 20px;
-            font-size: 15px; /* 크기 한 단계 낮춤 */
-            font-weight: 500; /* 요청하신 굵기 500 */
+            font-size: 15px;
+            font-weight: 500;
             color: #FFFFFF;
             white-space: pre-wrap;
             line-height: 1.5;
@@ -1059,14 +1103,18 @@
                         <span class="audio-time" id="audio-duration">00:00</span>
                     </div>
                 </div>
+
+                <!-- 📌 스크롤 시 항상 상단에 고정되는 탭 메뉴 및 편집 버튼 영역 -->
+                <div class="modal-tab-wrapper">
+                    <div class="modal-tab-menu">
+                        <button class="modal-tab-btn active" data-target="read-tab-note">본문내용</button>
+                        <button class="modal-tab-btn" data-target="read-tab-summary">나의 정리</button>
+                    </div>
+                    <button id="modal-inline-edit-btn" class="modal-inline-edit-btn">편집</button>
+                </div>
             </div>
 
             <div class="ebook-body">
-                <div class="modal-tab-menu">
-                    <button class="modal-tab-btn active" data-target="read-tab-note">본문내용</button>
-                    <button class="modal-tab-btn" data-target="read-tab-summary">나의 정리</button>
-                </div>
-
                 <div id="read-tab-note" class="modal-tab-content active">
                     <div id="read-note-content" class="ebook-text">작성된 노트가 없습니다.</div>
                 </div>
@@ -1090,12 +1138,12 @@
         <div class="modal fullscreen-ebook">
             <div class="sticky-header-container">
                 <div class="modal-header">
-                    <h2 class="modal-title" style="color: #38A169;">✏️ 일반 노트 편집</h2>
+                    <h2 class="modal-title" id="edit-modal-header-title" style="color: #38A169;">✏️ 일반 노트 편집</h2>
                     <button class="close-btn" id="close-edit-modal">&times;</button>
                 </div>
             </div>
             <div class="fullscreen-edit-body">
-                <div>
+                <div id="edit-dropdown-container">
                     <label class="edit-label" style="display:block; margin-bottom:5px;">📖 편집할 목차 선택 (교과서 및 부록)</label>
                     <div id="custom-dropdown-general" class="custom-dropdown">
                         <div class="dropdown-toggle" id="general-dropdown-toggle">선택하세요</div>
@@ -1358,7 +1406,7 @@
                         title: "제11장 하나님인가 에고인가(107~115)",
                         sublist: [
                             "T-11.in. 서문", "T-11.I. 부권의 선물들", "T-11.II. 치유로의 초대",
-                                                        {
+                            {
                                 title: "T-11.III. 어둠에서 빛으로",
                                 playlist: ["audio_110_1.mp3", "audio_110_2.mp3"]
                             },
@@ -1418,8 +1466,8 @@
                             "T-14.III. 죄책감을 느끼지 않겠다는 결정", "T-14.IV. 속죄에서 네가 맡은 역할", "T-14.V. 속죄의 원圓",
                             "T-14.VI. 소통의 빛", "T-14.VII. 성령과 공유하는 지각", "T-14.VIII. 거룩한 만남의 장소",
                             "T-14.IX. 거룩함의 반영", "T-14.X. 기적의 동등함", 
-                                                        {
-                                                            title: "T-14.XI. 진리에 대한 검증",
+                            {
+                                title: "T-14.XI. 진리에 대한 검증",
                                 playlist: ["audio_153_1.mp3", "audio_153_2.mp3"]
                             }
                         ]
@@ -2152,9 +2200,10 @@
 
         document.querySelectorAll('.modal-tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const parentBody = e.target.closest('.ebook-body') || e.target.closest('.fullscreen-edit-body');
-                parentBody.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
-                parentBody.querySelectorAll('.modal-tab-content').forEach(c => c.classList.remove('active'));
+                const targetModal = e.target.closest('.modal');
+                
+                targetModal.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+                targetModal.querySelectorAll('.modal-tab-content').forEach(c => c.classList.remove('active'));
                 
                 btn.classList.add('active');
                 document.getElementById(btn.getAttribute('data-target')).classList.add('active');
@@ -2259,6 +2308,8 @@
                 generalDropdown.setValue(generalSelectedId);
                 loadGeneralEditData();
             }
+            document.getElementById('edit-dropdown-container').style.display = 'block';
+            document.getElementById('edit-modal-header-title').textContent = "✏️ 일반 노트 편집";
             resetModalTabs('#edit-modal-overlay');
             const editModal = document.getElementById('edit-modal-overlay');
             editModal.style.display = 'flex';
@@ -2494,6 +2545,34 @@
             }
             
             updateAllChecks();
+        });
+
+        document.getElementById('modal-inline-edit-btn').addEventListener('click', () => {
+            if (!currentOpenedReadId) return;
+            const chapterObj = editableChapters.find(c => c.id === currentOpenedReadId);
+            if (!chapterObj) return;
+
+            const isWb = (chapterObj.section === "연습서 1부" || chapterObj.section === "연습서 2부");
+
+            if (isWb) {
+                wbSelectedId = currentOpenedReadId;
+                wbDropdown.setValue(wbSelectedId);
+                loadWbEditData();
+                resetModalTabs('#wb-edit-modal-overlay');
+                const wbEditModal = document.getElementById('wb-edit-modal-overlay');
+                wbEditModal.style.display = 'flex';
+                wbEditModal.querySelector('.fullscreen-edit-body').scrollTop = 0;
+            } else {
+                generalSelectedId = currentOpenedReadId;
+                generalDropdown.setValue(generalSelectedId);
+                loadGeneralEditData();
+                document.getElementById('edit-dropdown-container').style.display = 'none';
+                document.getElementById('edit-modal-header-title').textContent = `✏️ ${chapterObj.title} 편집`;
+                resetModalTabs('#edit-modal-overlay');
+                const editModal = document.getElementById('edit-modal-overlay');
+                editModal.style.display = 'flex';
+                editModal.querySelector('.fullscreen-edit-body').scrollTop = 0;
+            }
         });
 
         async function openReadModal(title, id, keepHistory = false) {
@@ -2746,6 +2825,11 @@
             localStorage.setItem(generalSelectedId + "_note", note);
             localStorage.setItem(generalSelectedId + "_summary", summary);
             showToast("성공적으로 저장되었습니다.");
+            
+            document.getElementById('edit-modal-overlay').style.display = 'none';
+            if (currentOpenedReadId) {
+                openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
+            }
         });
 
         document.getElementById('save-wb-btn').addEventListener('click', () => {
@@ -2760,6 +2844,11 @@
             localStorage.setItem(wbSelectedId + "_rel3", rel3Dropdown.getValue());
 
             showToast("성공적으로 저장되었습니다.");
+            
+            document.getElementById('wb-edit-modal-overlay').style.display = 'none';
+            if (currentOpenedReadId) {
+                openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
+            }
         });
 
         async function handleBackup(isSummary) {
@@ -2885,8 +2974,32 @@
                     readModalOverlay.style.display = 'none';
                 }
             }
-            if (e.target === document.getElementById('edit-modal-overlay')) document.getElementById('edit-modal-overlay').style.display = 'none';
-            if (e.target === document.getElementById('wb-edit-modal-overlay')) document.getElementById('wb-edit-modal-overlay').style.display = 'none';
+            if (e.target === document.getElementById('edit-modal-overlay')) {
+                document.getElementById('edit-modal-overlay').style.display = 'none';
+                if (currentOpenedReadId) {
+                    openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
+                }
+            }
+            if (e.target === document.getElementById('wb-edit-modal-overlay')) {
+                document.getElementById('wb-edit-modal-overlay').style.display = 'none';
+                if (currentOpenedReadId) {
+                    openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
+                }
+            }
+        });
+
+        document.getElementById('close-edit-modal').addEventListener('click', () => {
+            document.getElementById('edit-modal-overlay').style.display = 'none';
+            if (currentOpenedReadId) {
+                openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
+            }
+        });
+
+        document.getElementById('close-wb-edit-modal').addEventListener('click', () => {
+            document.getElementById('wb-edit-modal-overlay').style.display = 'none';
+            if (currentOpenedReadId) {
+                openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
+            }
         });
 
         function showToast(message) {
