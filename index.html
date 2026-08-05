@@ -3101,6 +3101,10 @@
 
         document.getElementById('restore-note-input').addEventListener('change', (e) => handleRestore(e, false));
         document.getElementById('restore-summary-input').addEventListener('change', (e) => handleRestore(e, true));
+        
+        // ✅ [추가된 코드] 백업 버튼 클릭 이벤트 연결
+        document.getElementById('backup-note-btn').addEventListener('click', () => handleBackup(false));
+        document.getElementById('backup-summary-btn').addEventListener('click', () => handleBackup(true));
 
         document.getElementById('close-read-modal').addEventListener('click', () => {
             if (modalHistory.length > 0) {
