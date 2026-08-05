@@ -1189,7 +1189,10 @@
                     <textarea id="edit-summary-textarea" placeholder="여기에 나의 정리를 작성하세요... (백업/복원 시 분리되어 관리됩니다)"></textarea>
                 </div>
             </div>
+            <!-- 일반 편집 모달 푸터 변경 (제미나이 및 복사하기 버튼 추가) -->
             <div class="modal-footer">
+                <button class="btn" style="background-color: #805AD5; color: white;" id="gemini-general-btn">제미나이</button>
+                <button class="btn" style="background-color: #4A5568; color: white;" id="copy-general-btn">복사하기</button>
                 <button class="btn btn-save" id="save-btn">저장하기</button>
             </div>
         </div>
@@ -2927,6 +2930,7 @@
             }
         }
 
+        // 📌 교과서 일반 편집: 저장 기능
         document.getElementById('save-btn').addEventListener('click', () => {
             if (!generalSelectedId) return;
             const note = document.getElementById('edit-note-textarea').value;
@@ -2939,6 +2943,27 @@
             if (currentOpenedReadId) {
                 openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
             }
+        });
+
+        // 📌 교과서 일반 편집: 제미나이 기능 연동
+        document.getElementById('gemini-general-btn').addEventListener('click', () => {
+            const savedPrompt = localStorage.getItem("global_gemini_prompt") || "";
+            document.getElementById('gemini-prompt-textarea').value = savedPrompt;
+            geminiModal.style.display = 'flex';
+        });
+
+        // 📌 교과서 일반 편집: 복사하기 기능 연동
+        document.getElementById('copy-general-btn').addEventListener('click', () => {
+            const noteText = document.getElementById('edit-note-textarea').value;
+            const geminiText = localStorage.getItem("global_gemini_prompt") || document.getElementById('gemini-prompt-textarea').value; 
+            
+            const textToCopy = `[본문 내용]\n${noteText}\n\n[제미나이 질문]\n${geminiText}`;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showToast("복사되었습니다.");
+            }).catch(err => {
+                showCustomAlert("복사에 실패했습니다: " + err);
+            });
         });
 
         // 📌 연습서 편집: 저장, 제미나이, 복사 기능
@@ -2963,7 +2988,7 @@
             }
         });
 
-        // 📌 제미나이 모달 열기 (글로벌 프롬프트 적용)
+        // 📌 제미나이 모달 열기 (글로벌 프롬프트 적용 - 연습서 편집용 기존 코드)
         const geminiModal = document.getElementById('gemini-modal-overlay');
         document.getElementById('gemini-btn').addEventListener('click', () => {
             const savedPrompt = localStorage.getItem("global_gemini_prompt") || "";
@@ -2984,7 +3009,7 @@
             showToast("제미나이 질문이 저장되었습니다.");
         });
 
-        // 📌 복사하기 기능 - 글로벌 프롬프트 적용
+        // 📌 복사하기 기능 - 글로벌 프롬프트 적용 (연습서 편집용)
         document.getElementById('copy-btn').addEventListener('click', () => {
             const noteText = document.getElementById('wb-note-textarea').value;
             const geminiText = localStorage.getItem("global_gemini_prompt") || document.getElementById('gemini-prompt-textarea').value; 
