@@ -30,6 +30,7 @@
             padding: 0; 
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            -webkit-text-size-adjust: 100%; /* 사파리 자동 글자 크기 조절 방지 */
         }
 
         .container {
@@ -634,6 +635,7 @@
             word-break: normal;
             overflow-wrap: break-word;
             text-align: left;
+            -webkit-text-size-adjust: 100%; /* 사파리 자동 글자 크기 조절 방지 */
         }
 
         .related-section {
@@ -2598,7 +2600,6 @@
             if (readAudioPlayer.currentTime > 0 && !readAudioPlayer.ended) {
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                 if (isIOS) {
-                    // 시간을 아주 미세하게 이동시켜 iOS의 오디오 디코더를 다시 연결시킴
                     readAudioPlayer.currentTime = readAudioPlayer.currentTime + 0.001; 
                 }
             }
@@ -2774,13 +2775,6 @@
                     let trimmed = line.trim();
                     let rawText = trimmed.replace(/<[^>]*>?/gm, '');
                     
-                    if (/^\d+\.\s/.test(rawText)) {
-                        return `<span style= "font-weight: 400;">${line}</span>`;
-                    }
-                    if (/^\d+\.\d+\s/.test(rawText)) {
-                        return `<span style=" font-weight: 400;">${line}</span>`;
-                    }
-                    
                     if (rawText.startsWith('##')) {
                         let cleanedLine = line.replace(/^\s*##\s*/, '');
                         return `<span style="font-size: 1.2em; font-weight: 600;">${cleanedLine}</span>`;
@@ -2933,7 +2927,6 @@
                     currentPlaylist = [];
                 }
 
-                // --- iOS 잠금화면 곡 정보 표시 (Media Session API) ---
                 if ('mediaSession' in navigator) {
                     navigator.mediaSession.metadata = new MediaMetadata({
                         title: chapterObj.title,
@@ -2995,7 +2988,6 @@
             }
         }
 
-        // 교과서 일반 편집: 저장 기능
         document.getElementById('save-btn').addEventListener('click', () => {
             if (!generalSelectedId) return;
             const note = document.getElementById('edit-note-textarea').value;
@@ -3015,7 +3007,6 @@
 
         const geminiModal = document.getElementById('gemini-modal-overlay');
 
-        // 교과서 일반 편집: 제미나이 기능 연동
         document.getElementById('gemini-general-btn').addEventListener('click', () => {
             activeGeminiType = 'general';
             document.getElementById('gemini-modal-title').textContent = "✨ 교과서 제미나이 질문 작성";
@@ -3024,7 +3015,6 @@
             geminiModal.style.display = 'flex';
         });
 
-        // 연습서 편집: 제미나이 기능 연동
         document.getElementById('gemini-btn').addEventListener('click', () => {
             activeGeminiType = 'wb';
             document.getElementById('gemini-modal-title').textContent = "✨ 연습서 제미나이 질문 작성";
@@ -3033,12 +3023,10 @@
             geminiModal.style.display = 'flex';
         });
 
-        // 제미나이 모달 닫기
         document.getElementById('close-gemini-modal').addEventListener('click', () => {
             geminiModal.style.display = 'none';
         });
 
-        // 제미나이 모달 저장(적용) - 구분 저장
         document.getElementById('save-gemini-btn').addEventListener('click', () => {
             const prompt = document.getElementById('gemini-prompt-textarea').value;
             if (activeGeminiType === 'general') {
@@ -3050,7 +3038,6 @@
             showToast("제미나이 질문이 저장되었습니다.");
         });
 
-        // 복사하기 기능 - 교과서용
         document.getElementById('copy-general-btn').addEventListener('click', () => {
             const noteText = document.getElementById('edit-note-textarea').value;
             const geminiText = localStorage.getItem("global_gemini_prompt_general") || document.getElementById('gemini-prompt-textarea').value; 
@@ -3064,7 +3051,6 @@
             });
         });
 
-        // 연습서 편집: 저장
         document.getElementById('save-wb-btn').addEventListener('click', () => {
             if (!wbSelectedId) return;
             const note = document.getElementById('wb-note-textarea').value;
@@ -3086,7 +3072,6 @@
             }
         });
 
-        // 복사하기 기능 - 연습서용
         document.getElementById('copy-btn').addEventListener('click', () => {
             const noteText = document.getElementById('wb-note-textarea').value;
             const geminiText = localStorage.getItem("global_gemini_prompt_wb") || document.getElementById('gemini-prompt-textarea').value; 
