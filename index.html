@@ -1099,7 +1099,8 @@
                     </div>
                     
                     <div class="custom-audio-player">
-                        <audio id="read-audio-player" style="display: none;"></audio>
+                        <!-- iOS 백그라운드 재생 최적화를 위해 preload와 playsinline 속성 추가 -->
+                        <audio id="read-audio-player" style="display: none;" preload="auto" playsinline></audio>
                         <div class="audio-controls-row">
                             <button class="audio-ctrl-btn" id="audio-prev-track-btn" title="이전 음성">⏮</button>
                             <button class="audio-ctrl-btn" id="audio-backward-btn" title="10초 뒤로">⏪</button>
@@ -1544,7 +1545,7 @@
                         sublist: [
                             "T-16.I. 진정한 공감", "T-16.II. 거룩함의 권능", "T-16.III. 가르침의 상급賞給",
                             {title: "T-16.IV. 사랑의 실재와 허상", playlist: ["audio_172_1.mp3", "audio_172_2.mp3"] },
-                            "T-16.V. 완성을 위한 선택", "T-16.VI. 실재세상으로 건너는 다리", "T-16.VII. 허상의 종말"
+                            "T-16.V. 완성을 위한 선택", "T-16.VI. 실재세상을 건너는 다리", "T-16.VII. 허상의 종말"
                         ]
                     },
                     {
@@ -2545,6 +2546,28 @@
             }
         });
 
+        // --- iOS 잠금화면 제어(Media Session API) ---
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.setActionHandler('play', function() {
+                readAudioPlayer.play();
+            });
+            navigator.mediaSession.setActionHandler('pause', function() {
+                readAudioPlayer.pause();
+            });
+            navigator.mediaSession.setActionHandler('previoustrack', function() {
+                document.getElementById('audio-prev-track-btn').click();
+            });
+            navigator.mediaSession.setActionHandler('nexttrack', function() {
+                document.getElementById('audio-next-track-btn').click();
+            });
+            navigator.mediaSession.setActionHandler('seekbackward', function() {
+                document.getElementById('audio-backward-btn').click();
+            });
+            navigator.mediaSession.setActionHandler('seekforward', function() {
+                document.getElementById('audio-forward-btn').click();
+            });
+        }
+
         readAudioPlayer.addEventListener('timeupdate', () => {
             if (!isNaN(readAudioPlayer.duration) && readAudioPlayer.duration > 0) {
                 const percent = (readAudioPlayer.currentTime / readAudioPlayer.duration) * 100;
@@ -2570,6 +2593,15 @@
             playBtnEl.style.display = 'none';
             pauseBtnEl.style.display = 'flex';
             updateInlinePlayButtons();
+
+            // [iOS 버그 픽스] 잠금화면 등에서 재개될 때 오디오 버퍼를 강제로 깨움
+            if (readAudioPlayer.currentTime > 0 && !readAudioPlayer.ended) {
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                if (isIOS) {
+                    // 시간을 아주 미세하게 이동시켜 iOS의 오디오 디코더를 다시 연결시킴
+                    readAudioPlayer.currentTime = readAudioPlayer.currentTime + 0.001; 
+                }
+            }
         });
 
         readAudioPlayer.addEventListener('pause', () => {
@@ -2649,18 +2681,16 @@
             let lines = processed.split('\n');
             let formattedLines = lines.map(line => {
                 let isBullet = false;
-                let isMainNumber = false; // 1., 2. 등
-                let isSubNumber = false;  // 1.1, 1.2 등
+                let isMainNumber = false; 
+                let isSubNumber = false;  
                 let textPart = line;
 
                 if (/^\s*\*/.test(line)) {
                     isBullet = true;
                     textPart = line.replace(/^\s*\*\s*/, ''); 
                 } else if (/^\s*\d+(?:\.\d+)+/.test(line)) {
-                    // 1.1, 1.2 등 하위 번호 감지
                     isSubNumber = true;
                 } else if (/^\s*\d+\./.test(line)) {
-                    // 1., 2. 등 메인 번호 감지
                     isMainNumber = true;
                 }
                 
@@ -2679,7 +2709,6 @@
                     textPart = '<span style="margin-left: 10px; margin-right: 6px; font-weight: bold;">•</span>' + textPart;
                 }
                 
-                // 번호 종류에 따라 각각 다른 스타일 적용
                 if (isMainNumber) {
                     textPart = '<span style="font-weight: 600; font-size: 1.2rem;">' + textPart + '</span>';
                 } else if (isSubNumber) {
@@ -2902,6 +2931,15 @@
                 } else {
                     readAudioPlayer.src = "";
                     currentPlaylist = [];
+                }
+
+                // --- iOS 잠금화면 곡 정보 표시 (Media Session API) ---
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: chapterObj.title,
+                        artist: '기적수업 오디오북',
+                        album: chapterObj.section || '오디오북'
+                    });
                 }
             } else {
                 readAudioPlayer.src = "";
