@@ -2746,10 +2746,10 @@
                     let rawText = trimmed.replace(/<[^>]*>?/gm, '');
                     
                     if (/^\d+\.\s/.test(rawText)) {
-                        return `<span style="font-size: 1.0rem; font-weight: 400;">${line}</span>`;
+                        return `<span style= "font-weight: 400;">${line}</span>`;
                     }
                     if (/^\d+\.\d+\s/.test(rawText)) {
-                        return `<span style="font-size: 1.0rem; font-weight: 400;">${line}</span>`;
+                        return `<span style=" font-weight: 400;">${line}</span>`;
                     }
                     
                     if (rawText.startsWith('##')) {
