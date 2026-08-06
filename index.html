@@ -2649,14 +2649,19 @@
             let lines = processed.split('\n');
             let formattedLines = lines.map(line => {
                 let isBullet = false;
-                let isNumbered = false;
+                let isMainNumber = false; // 1., 2. 등
+                let isSubNumber = false;  // 1.1, 1.2 등
                 let textPart = line;
 
                 if (/^\s*\*/.test(line)) {
                     isBullet = true;
                     textPart = line.replace(/^\s*\*\s*/, ''); 
+                } else if (/^\s*\d+(?:\.\d+)+/.test(line)) {
+                    // 1.1, 1.2 등 하위 번호 감지
+                    isSubNumber = true;
                 } else if (/^\s*\d+\./.test(line)) {
-                    isNumbered = true;
+                    // 1., 2. 등 메인 번호 감지
+                    isMainNumber = true;
                 }
                 
                 textPart = textPart.replace(/\*/g, '');
@@ -2673,14 +2678,19 @@
                     
                     textPart = '<span style="margin-left: 10px; margin-right: 6px; font-weight: bold;">•</span>' + textPart;
                 }
-                if (isNumbered) {
-                    textPart = '<span style="font-weight: 700;">' + textPart + '</span>';
+                
+                // 번호 종류에 따라 각각 다른 스타일 적용
+                if (isMainNumber) {
+                    textPart = '<span style="font-weight: 600; font-size: 1.2rem;">' + textPart + '</span>';
+                } else if (isSubNumber) {
+                    textPart = '<span style="font-weight: 500; font-size: 1.1rem;">' + textPart + '</span>';
                 }
                 
                 return textPart;
             });
             return formattedLines.join('<br>');
         }
+
 
         async function openReadModal(title, id, keepHistory = false, slideAnim = null) {
             const wrapper = document.getElementById('modal-content-wrapper');
@@ -2734,6 +2744,13 @@
                 lines = lines.map(line => {
                     let trimmed = line.trim();
                     let rawText = trimmed.replace(/<[^>]*>?/gm, '');
+                    
+                    if (/^\d+\.\s/.test(rawText)) {
+                        return `<span style="font-size: 1.2rem; font-weight: 400;">${line}</span>`;
+                    }
+                    if (/^\d+\.\d+\s/.test(rawText)) {
+                        return `<span style="font-size: 1.0rem; font-weight: 400;">${line}</span>`;
+                    }
                     
                     if (rawText.startsWith('##')) {
                         let cleanedLine = line.replace(/^\s*##\s*/, '');
