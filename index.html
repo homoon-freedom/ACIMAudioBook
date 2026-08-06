@@ -1130,7 +1130,7 @@
                     </div>
                 </div>
 
-                <div class="ebook-body">
+                <div class="ebook-body" id="ebook-body">
                     <div id="read-tab-note" class="modal-tab-content active">
                         <div id="read-note-content" class="ebook-text">작성된 노트가 없습니다.</div>
                     </div>
@@ -2839,7 +2839,7 @@
                 loadAudio(id);
             }
             readModalOverlay.style.display = 'flex';
-            readModalOverlay.querySelector('.ebook-body').scrollTop = 0;
+            document.getElementById('ebook-body').scrollTop = 0;
 
             if (slideAnim) {
                 wrapper.style.transition = 'none';
@@ -3228,11 +3228,12 @@
         let currentX = 0;
         let isSwiping = false;
         const modalContentWrapper = document.getElementById('modal-content-wrapper');
+        const ebookBody = document.getElementById('ebook-body');
 
-        modalContentWrapper.addEventListener('touchstart', (e) => {
+        ebookBody.addEventListener('touchstart', (e) => {
             if (!currentOpenedReadId) return;
             
-            if (e.target.closest('textarea, button, input, .custom-audio-player')) {
+            if (e.target.closest('button, input, .related-section, .related-item')) {
                 isSwiping = false;
                 return;
             }
@@ -3243,7 +3244,7 @@
             modalContentWrapper.style.transition = 'none';
         }, { passive: true });
 
-        modalContentWrapper.addEventListener('touchmove', (e) => {
+        ebookBody.addEventListener('touchmove', (e) => {
             if (!isSwiping) return;
             currentX = e.touches[0].clientX;
             const currentY = e.touches[0].clientY;
@@ -3257,7 +3258,7 @@
             }
         }, { passive: true });
 
-        modalContentWrapper.addEventListener('touchend', (e) => {
+        ebookBody.addEventListener('touchend', (e) => {
             if (!isSwiping) return;
             isSwiping = false;
 
