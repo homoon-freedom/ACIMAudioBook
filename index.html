@@ -30,7 +30,7 @@
             padding: 0; 
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            -webkit-text-size-adjust: 100%; /* 사파리 자동 글자 크기 조절 방지 */
+            -webkit-text-size-adjust: 100%;
         }
 
         .container {
@@ -46,7 +46,6 @@
             box-sizing: border-box; 
         }
 
-        /* 상단 고정 영역 컨테이너 */
         .sticky-top-wrapper {
             position: sticky;
             top: 0;
@@ -75,7 +74,6 @@
             font-weight: 700;
         }
 
-        /* 메인 탭 메뉴 스타일 */
         .tab-menu {
             display: flex;
             gap: 6px;
@@ -125,7 +123,6 @@
             display: block;
         }
 
-        /* 모달창 내부 서브 탭 스타일 */
         .modal-tab-wrapper {
             display: flex;
             align-items: center;
@@ -365,7 +362,6 @@
             transform: scale(1.05);
         }
 
-        /* 플로팅 메뉴 버튼 및 하단 바 스타일 */
         .menu-fab {
             position: fixed;
             bottom: calc(20px + env(safe-area-inset-bottom));
@@ -541,7 +537,6 @@
             position: relative;
         }
 
-        /* 📌 오버랩 슬라이드 효과를 위한 래퍼 컨테이너 */
         .modal-content-wrapper {
             position: absolute;
             top: 0;
@@ -635,7 +630,23 @@
             word-break: normal;
             overflow-wrap: break-word;
             text-align: left;
-            -webkit-text-size-adjust: 100%; /* 사파리 자동 글자 크기 조절 방지 */
+            -webkit-text-size-adjust: 100%;
+        }
+
+        /* 📌 본문 전용 번호 항목 스타일 (나의 정리 및 실천하기와 분리) */
+        .note-main-number {
+            font-size: 17px;
+            font-weight: 400;
+            font-color: #ffffff ;
+            display: inline-block;
+            margin-top: 8px;
+        }
+        .note-sub-number {
+            font-size: 17px;
+            font-weight: 400;
+            font-color: #ffffff;
+            display: inline-block;
+            margin-top: 6px;
         }
 
         .related-section {
@@ -692,7 +703,6 @@
             text-decoration: underline;
         }
 
-        /* 커스텀 오디오 플레이어 스타일 */
         .custom-audio-player {
             background: #E2E8F0;
             border-radius: 12px;
@@ -966,7 +976,6 @@
             to {bottom: 0; opacity: 0;}
         }
 
-        /* 커스텀 알림창 스타일 */
         .custom-alert-overlay {
             display: none;
             position: fixed;
@@ -1022,7 +1031,6 @@
     </style>
 </head>
 <body>
-    <!-- 커스텀 알림창 -->
     <div class="custom-alert-overlay" id="custom-alert-overlay">
         <div class="custom-alert-box">
             <div class="custom-alert-message" id="custom-alert-message"></div>
@@ -1033,7 +1041,6 @@
     </div>
 
     <div class="container">
-        <!-- 상단 고정 영역 시작 -->
         <div class="sticky-top-wrapper">
             <div class="header-container">
                 <h1>기적수업 오디오북</h1>
@@ -1046,7 +1053,6 @@
                 <button class="tab-btn" data-target="tab-appendix">부록</button>
             </div>
         </div>
-        <!-- 상단 고정 영역 끝 -->
 
         <div id="tab-textbook" class="tab-content active">
             <ul class="toc-list" id="toc-list-textbook"></ul>
@@ -1087,7 +1093,6 @@
         </div>
     </div>
 
-    <!-- 읽기 모달 -->
     <div class="modal-overlay" id="read-modal-overlay">
         <div class="modal fullscreen-ebook" id="read-modal-box">
             <div class="modal-content-wrapper" id="modal-content-wrapper">
@@ -1101,7 +1106,6 @@
                     </div>
                     
                     <div class="custom-audio-player">
-                        <!-- iOS 백그라운드 재생 최적화를 위해 preload와 playsinline 속성 추가 -->
                         <audio id="read-audio-player" style="display: none;" preload="auto" playsinline></audio>
                         <div class="audio-controls-row">
                             <button class="audio-ctrl-btn" id="audio-prev-track-btn" title="이전 음성">⏮</button>
@@ -1122,7 +1126,6 @@
                         </div>
                     </div>
 
-                    <!-- 📌 스크롤 시 항상 상단에 고정되는 탭 메뉴 및 편집 버튼 영역 -->
                     <div class="modal-tab-wrapper">
                         <div class="modal-tab-menu">
                             <button class="modal-tab-btn active" data-target="read-tab-note">본문내용</button>
@@ -1158,7 +1161,6 @@
         </div>
     </div>
 
-    <!-- 일반 편집 모달 -->
     <div class="modal-overlay" id="edit-modal-overlay">
         <div class="modal fullscreen-ebook">
             <div class="sticky-header-container">
@@ -1190,7 +1192,7 @@
                 </div>
                 
                 <div id="edit-tab-summary" class="modal-tab-content">
-                    <textarea id="edit-summary-textarea" placeholder="여기에 나의 정리를 작성하세요... (백업/복원 시 분리되어 관리됩니다)"></textarea>
+                    <textarea id="edit-summary-textarea" placeholder="여기에 나의 정리를 작성하세요..."></textarea>
                 </div>
 
                 <div id="edit-tab-practice" class="modal-tab-content">
@@ -1205,7 +1207,6 @@
         </div>
     </div>
 
-    <!-- 연습서 편집 모달 -->
     <div class="modal-overlay" id="wb-edit-modal-overlay">
         <div class="modal fullscreen-ebook">
             <div class="sticky-header-container">
@@ -1236,11 +1237,11 @@
                 </div>
                 
                 <div id="wb-tab-summary" class="modal-tab-content">
-                    <textarea id="wb-summary-textarea" class="wb-textarea" placeholder="여기에 나의 정리를 작성하세요... (백업/복원 시 분리되어 관리됩니다)"></textarea>
+                    <textarea id="wb-summary-textarea" class="wb-textarea" placeholder="여기에 나의 정리를 작성하세요..."></textarea>
                 </div>
 
                 <div id="wb-tab-practice" class="modal-tab-content">
-                    <textarea id="wb-practice-textarea" class="wb-textarea" placeholder="여기에 실천할 내용을 작성하세요... (백업/복원 시 정리 데이터와 함께 관리됩니다)"></textarea>
+                    <textarea id="wb-practice-textarea" class="wb-textarea" placeholder="여기에 실천할 내용을 작성하세요..."></textarea>
                 </div>
                 
                 <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
@@ -1279,7 +1280,6 @@
         </div>
     </div>
 
-    <!-- 제미나이 모달 -->
     <div class="modal-overlay" id="gemini-modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -1824,7 +1824,7 @@
 
         let currentPlaylist = [];
         let currentPlaylistIndex = 0;
-        let activeGeminiType = 'general'; // 'general' 또는 'wb'
+        let activeGeminiType = 'general';
 
         function buildTOC() {
             const containers = {
@@ -2548,7 +2548,6 @@
             }
         });
 
-        // --- iOS 잠금화면 제어(Media Session API) ---
         if ('mediaSession' in navigator) {
             navigator.mediaSession.setActionHandler('play', function() {
                 readAudioPlayer.play();
@@ -2596,7 +2595,6 @@
             pauseBtnEl.style.display = 'flex';
             updateInlinePlayButtons();
 
-            // [iOS 버그 픽스] 잠금화면 등에서 재개될 때 오디오 버퍼를 강제로 깨움
             if (readAudioPlayer.currentTime > 0 && !readAudioPlayer.ended) {
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                 if (isIOS) {
@@ -2721,7 +2719,6 @@
             return formattedLines.join('<br>');
         }
 
-
         async function openReadModal(title, id, keepHistory = false, slideAnim = null) {
             const wrapper = document.getElementById('modal-content-wrapper');
 
@@ -2764,6 +2761,7 @@
             returnAudioBtn.style.display = 'none';
             resetModalTabs('#read-modal-overlay');
             
+            // 📌 본문 내용 포맷팅 함수 (번호 감지 스타일 적용)
             const formatNoteContent = (text) => {
                 let processedText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 processedText = processedText.replace(/(["“”])([^\s"“”][^"“”]*?[^\s"“”]|[^\s"“”])(["“”])/g, '<span style="display: block; text-align: center; color: #38A169;">$1<span style="font-weight: 600; font-style: italic;">$2</span>$3</span>');
@@ -2783,6 +2781,13 @@
                     if (rawText.startsWith('#')) {
                         let cleanedLine = line.replace(/^\s*#\s*/, '');
                         return `<span style="font-size:1.1em; font-weight: 600;">${cleanedLine}</span>`;
+                    }
+                    
+                    // 본문 전용 번호 항목 키우기
+                    if (/^\s*(?:[A-Z0-9\-]+\.)+\s+/.test(rawText) || /^\s*\d+\.\s+/.test(rawText)) {
+                        return `<span class="note-main-number">${line}</span>`;
+                    } else if (/^\s*(?:\([0-9a-zA-Z]+\)|[0-9a-zA-Z]+\))\s+/.test(rawText)) {
+                        return `<span class="note-sub-number">${line}</span>`;
                     }
                     
                     return line;
