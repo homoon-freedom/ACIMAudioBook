@@ -6,7 +6,12 @@
     <title>오디오북:기적수업</title>
     <!-- 프리텐다드(Pretendard) 웹폰트 로드 -->
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+    
+    <!-- 🚀 localForage 라이브러리 추가 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    
     <style>
+        /* 기존 CSS와 완벽히 동일 (생략 없이 전체 포함) */
         :root {
             --primary-color: #2B6CB0;     
             --bg-color: #F8FAFC;          
@@ -633,7 +638,6 @@
             -webkit-text-size-adjust: 100%;
         }
 
-        /* 📌 본문 전용 번호 항목 스타일 (나의 정리 및 실천하기와 분리) */
         .note-main-number {
             font-size: 17px;
             font-weight: 400;
@@ -1028,9 +1032,25 @@
         .custom-alert-ok:active {
             background-color: #2D3748;
         }
+        
+        /* 🚀 로딩 화면 추가 (데이터 불러오는 동안 보여줌) */
+        #app-loading {
+            position: fixed;
+            top:0; left:0; width:100%; height:100%;
+            background: #fff;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 9999;
+            color: var(--primary-color);
+            font-size: 18px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
+    <!-- 🚀 데이터 로딩 화면 -->
+    <div id="app-loading">오디오북 데이터를 불러오는 중...</div>
+
     <div class="custom-alert-overlay" id="custom-alert-overlay">
         <div class="custom-alert-box">
             <div class="custom-alert-message" id="custom-alert-message"></div>
@@ -1298,6 +1318,46 @@
     <div id="toast" class="toast">성공적으로 저장되었습니다.</div>
 
     <script>
+        // =========================================================================
+        // 🚀 [추가됨] localForage 메모리 캐시 래퍼 (동기 처리 유지 & 비동기 저장)
+        // 기존 localStorage의 동기적(Synchronous) 특성을 유지하기 위해 앱 시작 시 
+        // IndexedDB의 데이터를 모두 메모리로 복사해두고 사용합니다.
+        // =========================================================================
+        const AppStorage = {
+            cache: {},
+            init: async function() {
+                try {
+                    // IndexedDB로 기본 설정
+                    localforage.config({
+                        name: 'MiracleAudioBook',
+                        storeName: 'app_data'
+                    });
+                    
+                    // DB의 모든 데이터를 메모리(cache)로 불러옴
+                    await localforage.iterate((value, key) => {
+                        this.cache[key] = value;
+                    });
+                } catch (e) {
+                    console.error("스토리지 초기화 실패:", e);
+                }
+            },
+            getItem: function(key) {
+                return this.cache[key] || null; // 동기 방식 (기존 코드 호환)
+            },
+            setItem: async function(key, value) {
+                this.cache[key] = String(value); 
+                await localforage.setItem(key, String(value)); // DB에도 비동기 저장
+            },
+            removeItem: async function(key) {
+                delete this.cache[key];
+                await localforage.removeItem(key);
+            },
+            keys: function() {
+                return Object.keys(this.cache);
+            }
+        };
+
+
         function showCustomAlert(message) {
             document.getElementById('custom-alert-message').textContent = message;
             document.getElementById('custom-alert-overlay').style.display = 'flex';
@@ -1316,499 +1376,192 @@
             return `<span style="flex-grow:1;">${title}</span>`;
         }
 
+        // 🚀 localStorage -> AppStorage 변경됨
         function getCheckIconHtml(id) {
-            const isChecked = localStorage.getItem(id + "_checked") === 'true';
+            const isChecked = AppStorage.getItem(id + "_checked") === 'true';
             return `<span class="toc-check-icon" id="check-icon-${id}">${isChecked ? '✔️' : ''}</span>`;
         }
 
         const tocData = [
+            // (내용 생략: 기존 tocData 배열과 100% 동일하게 유지합니다)
             {
                 title: "교과서",
                 sublist: [
-                    {
-                        title: "기적수업 서문",
-                        playlist: ["audio_1_1.mp3", "audio_1_2.mp3", "audio_1_3.mp3"] 
-                    },
+                    { title: "기적수업 서문", playlist: ["audio_1_1.mp3", "audio_1_2.mp3", "audio_1_3.mp3"] },
                     "교과서 서문",
                     {
                         title: "제1장 기적의 의미(5~11)",
                         playlist: ["audio_5_1.mp3", "audio_5_2.mp3", "audio_6.mp3", "audio_7.mp3", "audio_8.mp3", "audio_9.mp3", "audio_10.mp3", "audio_11.mp3"],
                         sublist: [
-                            {
-                                title: "T-1.I. 기적의 원리",
-                                playlist: ["audio_5_1.mp3", "audio_5_2.mp3"]
-                            }, 
+                            { title: "T-1.I. 기적의 원리", playlist: ["audio_5_1.mp3", "audio_5_2.mp3"] }, 
                             "T-1.II. 계시, 시간과 기적", "T-1.III. 속죄와 기적",
                             "T-1.IV. 어둠에서 벗어나기", "T-1.V. 전일성과 영", "T-1.VI. 필요라는 허상", "T-1.VII. 기적충동의 왜곡"
                         ]
                     },
                     {
                         title: "제2장 분리와 속죄(14~22)",
-                        playlist: [
-                            "audio_14.mp3", "audio_15.mp3", "audio_16.mp3", "audio_17.mp3", 
-                            "audio_18_1.mp3", "audio_18_2.mp3", "audio_19.mp3", 
-                            "audio_20_1.mp3", "audio_20_2.mp3", "audio_21_1.mp3", 
-                            "audio_21_2.mp3", "audio_22.mp3"
-                        ],
+                        playlist: ["audio_14.mp3", "audio_15.mp3", "audio_16.mp3", "audio_17.mp3", "audio_18_1.mp3", "audio_18_2.mp3", "audio_19.mp3", "audio_20_1.mp3", "audio_20_2.mp3", "audio_21_1.mp3", "audio_21_2.mp3", "audio_22.mp3"],
                         sublist: [
-                            "T-2.I. 분리의 기원", "T-2.II. 방어로서의 속죄", "T-2.III. 하나님의 제단",
-                            "T-2.IV. 두려움으로부터 해방인 치유", 
-                            {
-                                title: "T-2.V. 기적을 행하는 자의 역할",
-                                playlist: ["audio_18_1.mp3", "audio_18_2.mp3"]
-                            }, 
+                            "T-2.I. 분리의 기원", "T-2.II. 방어로서의 속죄", "T-2.III. 하나님의 제단", "T-2.IV. 두려움으로부터 해방인 치유", 
+                            { title: "T-2.V. 기적을 행하는 자의 역할", playlist: ["audio_18_1.mp3", "audio_18_2.mp3"] }, 
                             "T-2.V.A. 기적을 행하는 자가 알아야 할 특별한 원리",
-                            {
-                                title: "T-2.VI. 두려움과 갈등",
-                                playlist: ["audio_20_1.mp3", "audio_20_2.mp3"]
-                            },
-                            {
-                                title: "T-2.VII. 원인과 결과",
-                                playlist: ["audio_21_1.mp3", "audio_21_2.mp3"]
-                            }, 
+                            { title: "T-2.VI. 두려움과 갈등", playlist: ["audio_20_1.mp3", "audio_20_2.mp3"] },
+                            { title: "T-2.VII. 원인과 결과", playlist: ["audio_21_1.mp3", "audio_21_2.mp3"] }, 
                             "T-2.VIII. 최후의 심판의 의미"
                         ]
                     },
                     {
                         title: "제3장 결백한 지각(25~31)",
-                        playlist: [
-                            "audio_25_1.mp3", "audio_25_2.mp3", "audio_26.mp3", "audio_27.mp3", 
-                            "audio_28_1.mp3", "audio_28_2.mp3", "audio_29_1.mp3", "audio_29_2.mp3", 
-                            "audio_30_1.mp3", "audio_30_2.mp3", "audio_31.mp3"
-                        ],
+                        playlist: ["audio_25_1.mp3", "audio_25_2.mp3", "audio_26.mp3", "audio_27.mp3", "audio_28_1.mp3", "audio_28_2.mp3", "audio_29_1.mp3", "audio_29_2.mp3", "audio_30_1.mp3", "audio_30_2.mp3", "audio_31.mp3"],
                         sublist: [
-                            {
-                                title: "T-3.I. 희생 없는 속죄",
-                                playlist: ["audio_25_1.mp3", "audio_25_2.mp3"]
-                            }, 
-                            "T-3.II. 참된 지각인 기적", 
-                            "T-3.III. 지각 대 지식",
-                            {
-                                title: "T-3.IV. 오류와 에고",
-                                playlist: ["audio_28_1.mp3", "audio_28_2.mp3"]
-                            }, 
-                            {
-                                title: "T-3.V. 지각을 넘어서",
-                                playlist: ["audio_29_1.mp3", "audio_29_2.mp3"]
-                            }, 
-                            {
-                                title: "T-3.VI. 심판과 권위 문제",
-                                playlist: ["audio_30_1.mp3", "audio_30_2.mp3"]
-                            }, 
+                            { title: "T-3.I. 희생 없는 속죄", playlist: ["audio_25_1.mp3", "audio_25_2.mp3"] }, 
+                            "T-3.II. 참된 지각인 기적", "T-3.III. 지각 대 지식",
+                            { title: "T-3.IV. 오류와 에고", playlist: ["audio_28_1.mp3", "audio_28_2.mp3"] }, 
+                            { title: "T-3.V. 지각을 넘어서", playlist: ["audio_29_1.mp3", "audio_29_2.mp3"] }, 
+                            { title: "T-3.VI. 심판과 권위 문제", playlist: ["audio_30_1.mp3", "audio_30_2.mp3"] }, 
                             "T-3.VII. 창조 대 자아상"
                         ]
                     },
                     {
                         title: "제4장 에고의 허상(34~41)",
-                        sublist: [
-                            "T-4.in. 서문", "T-4.I. 바른 교육과 바른 학습", "T-4.II. 에고와 거짓 자율",
-                            "T-4.III. 갈등 없는 사랑", "T-4.IV. 그럴 필요가 없다", "T-4.V. 에고와 육체의 허상",
-                            "T-4.VI. 하나님의 상급賞給", "T-4.VII. 창조와 소통"
-                        ]
+                        sublist: ["T-4.in. 서문", "T-4.I. 바른 교육과 바른 학습", "T-4.II. 에고와 거짓 자율", "T-4.III. 갈등 없는 사랑", "T-4.IV. 그럴 필요가 없다", "T-4.V. 에고와 육체의 허상", "T-4.VI. 하나님의 상급賞給", "T-4.VII. 창조와 소통"]
                     },
                     {
                         title: "제5장 치유와 전일성(44~51)",
-                        sublist: [
-                            "T-5.in. 서문", "T-5.I. 성령에게 보내는 초대장", "T-5.II. 하나님을 대변하는 음성",
-                            "T-5.III. 구원으로 이끄는 안내자", "T-5.IV. 가르침과 치유", "T-5.V. 에고는 어떻게 죄책감을 이용하는가",
-                            "T-5.VI. 시간과 영원", "T-5.VII. 하나님을 택함"
-                        ]
+                        sublist: ["T-5.in. 서문", "T-5.I. 성령에게 보내는 초대장", "T-5.II. 하나님을 대변하는 음성", "T-5.III. 구원으로 이끄는 안내자", "T-5.IV. 가르침과 치유", "T-5.V. 에고는 어떻게 죄책감을 이용하는가", "T-5.VI. 시간과 영원", "T-5.VII. 하나님을 택함"]
                     },
                     {
                         title: "제6장 사랑의 가르침(54~62)",
-                        sublist: [
-                            "T-6.in. 서문", "T-6.I. 십자가의 메시지", 
-                            {
-                                title: "T-6.II. 투사의 대안",
-                                playlist: ["audio_56_1.mp3", "audio_56_2.mp3"]
-                            },
-                            "T-6.III. 공격의 포기", "T-6.IV. 유일한 답", "T-6.V. 성령의 가르침",
-                            "T-6.V.A. 가지려면 모두에게 모두 주라", "T-6.V.B. 평화를 가지려면, 평화를 가르쳐 평화를 배우라", "T-6.V.C. 오직 하나님과 그 나라를 지키기 위해 경계하라"
-                        ]
+                        sublist: ["T-6.in. 서문", "T-6.I. 십자가의 메시지", { title: "T-6.II. 투사의 대안", playlist: ["audio_56_1.mp3", "audio_56_2.mp3"] }, "T-6.III. 공격의 포기", "T-6.IV. 유일한 답", "T-6.V. 성령의 가르침", "T-6.V.A. 가지려면 모두에게 모두 주라", "T-6.V.B. 평화를 가지려면, 평화를 가르쳐 평화를 배우라", "T-6.V.C. 오직 하나님과 그 나라를 지키기 위해 경계하라"]
                     },
                     {
                         title: "제7장 왕국의 선물(65~75)",
-                        sublist: [
-                            "T-7.I. 마지막 단계", "T-7.II. 왕국의 법", "T-7.III. 왕국의 실재",
-                            "T-7.IV. 진리의 인식인 치유", "T-7.V. 치유와 마음의 불변성", "T-7.VI. 경계에서 평화로",
-                            "T-7.VII. 왕국의 전체성", "T-7.VIII. 믿기지 않는 믿음", "T-7.IX. 왕국의 확장",
-                            "T-7.X. 고통과 기쁨의 혼동", "T-7.XI. 은총의 상태"
-                        ]
+                        sublist: ["T-7.I. 마지막 단계", "T-7.II. 왕국의 법", "T-7.III. 왕국의 실재", "T-7.IV. 진리의 인식인 치유", "T-7.V. 치유와 마음의 불변성", "T-7.VI. 경계에서 평화로", "T-7.VII. 왕국의 전체성", "T-7.VIII. 믿기지 않는 믿음", "T-7.IX. 왕국의 확장", "T-7.X. 고통과 기쁨의 혼동", "T-7.XI. 은총의 상태"]
                     },
                     {
                         title: "제8장 귀환(78~86)",
-                        sublist: [
-                            "T-8.I. 교육과정의 방향", "T-8.II. 속박과 자유의 차이", "T-8.III. 거룩한 만남",
-                            "T-8.IV. 자유의 선물", "T-8.V. 성자단의 통합된 뜻", "T-8.VI. 하나님의 보물",
-                            "T-8.VII. 소통 수단인 육체", "T-8.VIII. 수단이나 목적이 되는 육체", "T-8.IX. 교정된 지각인 치유"
-                        ]
+                        sublist: ["T-8.I. 교육과정의 방향", "T-8.II. 속박과 자유의 차이", "T-8.III. 거룩한 만남", "T-8.IV. 자유의 선물", "T-8.V. 성자단의 통합된 뜻", "T-8.VI. 하나님의 보물", "T-8.VII. 소통 수단인 육체", "T-8.VIII. 수단이나 목적이 되는 육체", "T-8.IX. 교정된 지각인 치유"]
                     },
                     {
                         title: "제9장 속죄의 수용(89~96)",
-                        sublist: [
-                            "T-9.I. 실재의 수용", "T-9.II. 기도의 응답", "T-9.III. 오류의 교정",
-                            "T-9.IV. 성령의 용서 계획", "T-9.V. 치유되지 않은 치유사", "T-9.VI. 형제를 받아들임",
-                            "T-9.VII. 두 평가", "T-9.VIII. 장엄과 과장"
-                        ]
+                        sublist: ["T-9.I. 실재의 수용", "T-9.II. 기도의 응답", "T-9.III. 오류의 교정", "T-9.IV. 성령의 용서 계획", "T-9.V. 치유되지 않은 치유사", "T-9.VI. 형제를 받아들임", "T-9.VII. 두 평가", "T-9.VIII. 장엄과 과장"]
                     },
                     {
                         title: "제10장 병이라는 우상(99~104)",
-                        sublist: [
-                            "T-10.in. 서문", "T-10.I. 하나님 안의 집에서", "T-10.II. 잊겠다는 결정",
-                            "T-10.III. 병의 신", "T-10.IV. 병의 종말", "T-10.V. 하나님에 대한 부인"
-                        ]
+                        sublist: ["T-10.in. 서문", "T-10.I. 하나님 안의 집에서", "T-10.II. 잊겠다는 결정", "T-10.III. 병의 신", "T-10.IV. 병의 종말", "T-10.V. 하나님에 대한 부인"]
                     },
                     {
                         title: "제11장 하나님인가 에고인가(107~115)",
-                        sublist: [
-                            "T-11.in. 서문", "T-11.I. 부권의 선물들", "T-11.II. 치유로의 초대",
-                            {
-                                title: "T-11.III. 어둠에서 빛으로",
-                                playlist: ["audio_110_1.mp3", "audio_110_2.mp3"]
-                            },
-                            "T-11.IV. 하나님의 아들이 받은 유산", "T-11.V. 에고의 '역동성動力性'",
-                            "T-11.VI. 속량贖良에 눈 뜸", "T-11.VII. 실재의 조건", 
-                            {
-                                title: "T-11.VIII. 문제와 답",
-                                playlist: ["audio_115_1.mp3", "audio_115_2.mp3"]
-                            }
-                        ]
+                        sublist: ["T-11.in. 서문", "T-11.I. 부권의 선물들", "T-11.II. 치유로의 초대", { title: "T-11.III. 어둠에서 빛으로", playlist: ["audio_110_1.mp3", "audio_110_2.mp3"] }, "T-11.IV. 하나님의 아들이 받은 유산", "T-11.V. 에고의 '역동성動力性'", "T-11.VI. 속량贖良에 눈 뜸", "T-11.VII. 실재의 조건", { title: "T-11.VIII. 문제와 답", playlist: ["audio_115_1.mp3", "audio_115_2.mp3"] }]
                     },
                     {
                         title: "제12장 성령의 교육과정(118~125)",
-                        sublist: [
-                            {
-                                title: "T-12.I. 성령의 판단",
-                                playlist: ["audio_118_1.mp3", "audio_118_2.mp3"]
-                            },
-                            {
-                                title: "T-12.II. 하나님을 기억하는 지름길",
-                                playlist: ["audio_119_1.mp3", "audio_119_2.mp3"]
-                            },
-                            "T-12.III. 실재에 대한 투자",
-                            "T-12.IV. 구함과 찾음", "T-12.V. 온전한 교육과정", "T-12.VI. 그리스도의 비전",
-                            "T-12.VII. 내면의 성찰", 
-                             { title: "T-12.VIII. 사랑을 끌어당기는 사랑",playlist: ["audio_125_1.mp3", "audio_125_2.mp3"] }
-                        ]
+                        sublist: [{ title: "T-12.I. 성령의 판단", playlist: ["audio_118_1.mp3", "audio_118_2.mp3"] }, { title: "T-12.II. 하나님을 기억하는 지름길", playlist: ["audio_119_1.mp3", "audio_119_2.mp3"] }, "T-12.III. 실재에 대한 투자", "T-12.IV. 구함과 찾음", "T-12.V. 온전한 교육과정", "T-12.VI. 그리스도의 비전", "T-12.VII. 내면의 성찰", { title: "T-12.VIII. 사랑을 끌어당기는 사랑",playlist: ["audio_125_1.mp3", "audio_125_2.mp3"] }]
                     },
                     {
                         title: "제13장 죄 없는 세상(128~139)",
-                        sublist: [
-                            "T-13.in. 서문", "T-13.I. 무죄와 상처받을 수 없음", "T-13.II. 죄 없는 하나님의 아들",
-                            {
-                                title: "T-13.III. 속량에 대한 두려움",
-                                playlist: ["audio_131_1.mp3", "audio_131_2.mp3"]
-                            }, 
-                            {
-                                title: "T-13.IV. 시간의 기능",
-                                playlist: ["audio_132_1.mp3", "audio_132_2.mp3"]
-                            }, 
-                            "T-13.V. 두 감정",
-                            {
-                                title: "T-13.VI. 현재의 발견",
-                                playlist: ["audio_134_1.mp3", "audio_134_2.mp3"]
-                            },
-                            {
-                                title: "T-13.VII. 실재세상을 얻음",
-                                playlist: ["audio_135_1.mp3", "audio_135_2.mp3"]
-                            },
-                            "T-13.VIII. 지각에서 지식으로",
-                            "T-13.IX. 죄책의 구름", "T-13.X. 죄책감에서의 해방", "T-13.XI. 천국의 평화"
-                        ]
+                        sublist: ["T-13.in. 서문", "T-13.I. 무죄와 상처받을 수 없음", "T-13.II. 죄 없는 하나님의 아들", { title: "T-13.III. 속량에 대한 두려움", playlist: ["audio_131_1.mp3", "audio_131_2.mp3"] }, { title: "T-13.IV. 시간의 기능", playlist: ["audio_132_1.mp3", "audio_132_2.mp3"] }, "T-13.V. 두 감정", { title: "T-13.VI. 현재의 발견", playlist: ["audio_134_1.mp3", "audio_134_2.mp3"] }, { title: "T-13.VII. 실재세상을 얻음", playlist: ["audio_135_1.mp3", "audio_135_2.mp3"] }, "T-13.VIII. 지각에서 지식으로", "T-13.IX. 죄책의 구름", "T-13.X. 죄책감에서의 해방", "T-13.XI. 천국의 평화"]
                     },
                     {
                         title: "제14장 진리의 가르침(142~153)",
-                        sublist: [
-                            "T-14.in. 서문", "T-14.I. 배움의 조건", "T-14.II. 행복한 학습자",
-                            "T-14.III. 죄책감을 느끼지 않겠다는 결정", "T-14.IV. 속죄에서 네가 맡은 역할", "T-14.V. 속죄의 원圓",
-                            "T-14.VI. 소통의 빛", "T-14.VII. 성령과 공유하는 지각", "T-14.VIII. 거룩한 만남의 장소",
-                            "T-14.IX. 거룩함의 반영", "T-14.X. 기적의 동등함", 
-                            {
-                                title: "T-14.XI. 진리에 대한 검증",
-                                playlist: ["audio_153_1.mp3", "audio_153_2.mp3"]
-                            }
-                        ]
+                        sublist: ["T-14.in. 서문", "T-14.I. 배움의 조건", "T-14.II. 행복한 학습자", "T-14.III. 죄책감을 느끼지 않겠다는 결정", "T-14.IV. 속죄에서 네가 맡은 역할", "T-14.V. 속죄의 원圓", "T-14.VI. 소통의 빛", "T-14.VII. 성령과 공유하는 지각", "T-14.VIII. 거룩한 만남의 장소", "T-14.IX. 거룩함의 반영", "T-14.X. 기적의 동등함", { title: "T-14.XI. 진리에 대한 검증", playlist: ["audio_153_1.mp3", "audio_153_2.mp3"] }]
                     },
                     {
                         title: "제15장 거룩한 순간(156~166)",
-                        sublist: [
-                            {
-                                title: "T-15.I. 시간을 사용하는 두 가지 방법",
-                                playlist: ["audio_156_1.mp3", "audio_156_2.mp3"]
-                            }, 
-                            "T-15.II. 의심의 종말", "T-15.III. 왜소함과 장대함",
-                            "T-15.IV. 거룩한 순간을 연습하기", "T-15.V. 거룩한 순간과 특별한 관계", "T-15.VI. 거룩한 순간과 하나님의 법",
-                            "T-15.VII. 불필요한 희생", "T-15.VIII. 유일한 실재 관계", "T-15.IX. 거룩한 순간과 하나님의 끌어당김",
-                            "T-15.X. 거듭남의 시간", "T-15.XI. 희생의 종말인 성탄절"
-                        ]
+                        sublist: [{ title: "T-15.I. 시간을 사용하는 두 가지 방법", playlist: ["audio_156_1.mp3", "audio_156_2.mp3"] }, "T-15.II. 의심의 종말", "T-15.III. 왜소함과 장대함", "T-15.IV. 거룩한 순간을 연습하기", "T-15.V. 거룩한 순간과 특별한 관계", "T-15.VI. 거룩한 순간과 하나님의 법", "T-15.VII. 불필요한 희생", "T-15.VIII. 유일한 실재 관계", "T-15.IX. 거룩한 순간과 하나님의 끌어당김", "T-15.X. 거듭남의 시간", "T-15.XI. 희생의 종말인 성탄절"]
                     },
                     {
                         title: "제16장 허상에 대한 용서(169~175)",
-                        sublist: [
-                            "T-16.I. 진정한 공감", "T-16.II. 거룩함의 권능", "T-16.III. 가르침의 상급賞給",
-                            {title: "T-16.IV. 사랑의 실재와 허상", playlist: ["audio_172_1.mp3", "audio_172_2.mp3"] },
-                            "T-16.V. 완성을 위한 선택", "T-16.VI. 실재세상을 건너는 다리", "T-16.VII. 허상의 종말"
-                        ]
+                        sublist: ["T-16.I. 진정한 공감", "T-16.II. 거룩함의 권능", "T-16.III. 가르침의 상급賞給", {title: "T-16.IV. 사랑의 실재와 허상", playlist: ["audio_172_1.mp3", "audio_172_2.mp3"] }, "T-16.V. 완성을 위한 선택", "T-16.VI. 실재세상을 건너는 다리", "T-16.VII. 허상의 종말"]
                     },
                     {
                         title: "제17장 용서와 거룩한 관계(178~185)",
-                        sublist: [
-                            "T-17.I. 환상을 진리로 가져오기", "T-17.II. 용서받은 세상", 
-                            {title: "T-17.III. 과거의 그림자",playlist: ["audio_180_1.mp3", "audio_180_2.mp3"]},
-                            "T-17.IV. 두 그림", "T-17.V. 치유된 관계", "T-17.VI. 목표 설정", "T-17.VII. 믿음의 요청", "T-17.VIII. 평화의 조건"
-                        ]
+                        sublist: ["T-17.I. 환상을 진리로 가져오기", "T-17.II. 용서받은 세상", {title: "T-17.III. 과거의 그림자",playlist: ["audio_180_1.mp3", "audio_180_2.mp3"]}, "T-17.IV. 두 그림", "T-17.V. 치유된 관계", "T-17.VI. 목표 설정", "T-17.VII. 믿음의 요청", "T-17.VIII. 평화의 조건"]
                     },
                     {
                         title: "제18장 꿈의 종결(188~196)",
-                        sublist: [
-                            "T-18.I. 실재의 대체", "T-18.II. 꿈의 기반", "T-18.III. 꿈속의 빛",
-                            "T-18.IV. 작은 용의", "T-18.V. 행복한 꿈", 
-                            {
-                                title: "T-18.VI. 몸을 넘어서",
-                                playlist: ["audio_193_1.mp3", "audio_193_2.mp3"]
-                            },
-                            { title: "T-18.VII. 나는 아무것도 할 필요가 없다", playlist: ["audio_194_1.mp3", "audio_194_2.mp3"]},
-                             "T-18.VIII. 작은 동산", "T-18.IX. 두 세상"
-                        ]
+                        sublist: ["T-18.I. 실재의 대체", "T-18.II. 꿈의 기반", "T-18.III. 꿈속의 빛", "T-18.IV. 작은 용의", "T-18.V. 행복한 꿈", { title: "T-18.VI. 몸을 넘어서", playlist: ["audio_193_1.mp3", "audio_193_2.mp3"] }, { title: "T-18.VII. 나는 아무것도 할 필요가 없다", playlist: ["audio_194_1.mp3", "audio_194_2.mp3"]}, "T-18.VIII. 작은 동산", "T-18.IX. 두 세상"]
                     },
                     {
                         title: "제19장 평화의 달성(199~210)",
-                        sublist: [
-                            "T-19.I. 치유와 믿음", "T-19.II. 죄와 오류", "T-19.III. 죄의 비실재성",
-                            "T-19.IV. 평화를 가로막는 장애", "T-19.IV.A. 첫 번째 장애: 평화를 없애려는 열망", "i. 죄책의 매력",
-                            "T-19.IV.B. 두 번째 장애: 몸은 몸이 제공하는 것 때문에 가치 있다는 믿음", "i. 고통의 매력",
-                            "T-19.IV.C. 세 번째 장애: 죽음의 매력", "i. 썩지 않는 몸",
-                            "T-19.IV.D. 네 번째 장애: 하나님에 대한 두려움", "i. 장막을 거둠"
-                        ]
+                        sublist: ["T-19.I. 치유와 믿음", "T-19.II. 죄와 오류", "T-19.III. 죄의 비실재성", "T-19.IV. 평화를 가로막는 장애", "T-19.IV.A. 첫 번째 장애: 평화를 없애려는 열망", "i. 죄책의 매력", "T-19.IV.B. 두 번째 장애: 몸은 몸이 제공하는 것 때문에 가치 있다는 믿음", "i. 고통의 매력", "T-19.IV.C. 세 번째 장애: 죽음의 매력", "i. 썩지 않는 몸", "T-19.IV.D. 네 번째 장애: 하나님에 대한 두려움", "i. 장막을 거둠"]
                     },
                     {
                         title: "제20장 거룩함의 비전(213~220)",
-                        sublist: [
-                            "T-20.I. 거룩한 주간", "T-20.II. 백합 선물", "T-20.III. 조정으로서의 죄",
-                            "T-20.IV. 방주에 오름", "T-20.V. 영원을 알리는 전령", "T-20.VI. 성령의 사원",
-                            "T-20.VII. 수단과 목적의 일치", 
-                             { title: "T-20.VIII. 무죄를 보는 비전", playlist: ["audio_220_1.mp3", "audio_220_2.mp3"] }
-                        ]
+                        sublist: ["T-20.I. 거룩한 주간", "T-20.II. 백합 선물", "T-20.III. 조정으로서의 죄", "T-20.IV. 방주에 오름", "T-20.V. 영원을 알리는 전령", "T-20.VI. 성령의 사원", "T-20.VII. 수단과 목적의 일치", { title: "T-20.VIII. 무죄를 보는 비전", playlist: ["audio_220_1.mp3", "audio_220_2.mp3"] }]
                     },
                     {
                         title: "제21장 이성과 지각(223~231)",
-                        sublist: [
-                            "T-21.in. 서문", 
-                            {
-                                title: "T-21.I. 잊혀진 노래",
-                                playlist: ["audio_224_1.mp3", "audio_224_2.mp3"]
-                            },
-                            {
-                                title: "T-21.II. 보는 것에 대한 책임",
-                                playlist: ["audio_225_1.mp3", "audio_225_2.mp3"]
-                            },
-                            { title: "T-21.III. 믿음과 신념과 비전", playlist: ["audio_226_1.mp3", "audio_226_2.mp3"] },
-                            "T-21.IV. 내면을 보는 두려움", "T-21.V. 이성의 기능",
-                            { title: "T-21.VI. 이성과 정신이상", playlist: ["audio_229_1.mp3", "audio_229_2.mp3"] },
-                            "T-21.VII. 대답되지 않은 마지막 질문", "T-21.VIII. 내면의 변화"
-                        ]
+                        sublist: ["T-21.in. 서문", { title: "T-21.I. 잊혀진 노래", playlist: ["audio_224_1.mp3", "audio_224_2.mp3"] }, { title: "T-21.II. 보는 것에 대한 책임", playlist: ["audio_225_1.mp3", "audio_225_2.mp3"] }, { title: "T-21.III. 믿음과 신념과 비전", playlist: ["audio_226_1.mp3", "audio_226_2.mp3"] }, "T-21.IV. 내면을 보는 두려움", "T-21.V. 이성의 기능", { title: "T-21.VI. 이성과 정신이상", playlist: ["audio_229_1.mp3", "audio_229_2.mp3"] }, "T-21.VII. 대답되지 않은 마지막 질문", "T-21.VIII. 내면의 변화"]
                     },
                     {
                         title: "제22장 구원과 거룩한 관계(234~240)",
-                        sublist: [
-                            "T-22.in. 서문", "T-22.I. 거룩한 관계의 메시지", "T-22.II. 형제의 무죄",
-                            "T-22.III. 오류의 여러 형태와 이성", "T-22.IV. 갈림길", "T-22.V. 약함과 방어", "T-22.VI. 거룩한 관계의 빛"
-                        ]
+                        sublist: ["T-22.in. 서문", "T-22.I. 거룩한 관계의 메시지", "T-22.II. 형제의 무죄", "T-22.III. 오류의 여러 형태와 이성", "T-22.IV. 갈림길", "T-22.V. 약함과 방어", "T-22.VI. 거룩한 관계의 빛"]
                     },
                     {
                         title: "제23장 자신과의 전쟁(243~247)",
-                        sublist: [
-                            "T-23.in. 서문", "T-23.I. 양립할 수 없는 신념", "T-23.II. 혼돈의 법",
-                            "T-23.III. 타협 없는 구원", "T-23.IV. 전쟁터 위에서"
-                        ]
+                        sublist: ["T-23.in. 서문", "T-23.I. 양립할 수 없는 신념", "T-23.II. 혼돈의 법", "T-23.III. 타협 없는 구원", "T-23.IV. 전쟁터 위에서"]
                     },
                     {
                         title: "제24장 특별함의 목적(250~257)",
-                        sublist: [
-                            "T-24.in. 서문", "T-24.I. 사랑의 대체인 특별함", "T-24.II. 특별함의 배반",
-                            "T-24.III. 특별함의 용서", "T-24.IV. 특별함과 죄없음", "T-24.V. 네 안의 그리스도",
-                            "T-24.VI. 두려움으로부터의 구원", "T-24.VII. 만남의 장소"
-                        ]
+                        sublist: ["T-24.in. 서문", "T-24.I. 사랑의 대체인 특별함", "T-24.II. 특별함의 배반", "T-24.III. 특별함의 용서", "T-24.IV. 특별함과 죄없음", "T-24.V. 네 안의 그리스도", "T-24.VI. 두려움으로부터의 구원", "T-24.VII. 만남의 장소"]
                     },
                     {
                         title: "제25장 하나님의 정의正義(260~269)",
-                        sublist: [
-                            "T-25.in. 서문", "T-25.I. 진리로의 연결 고리", "T-25.II. 어둠에서 건져내는 구원자",
-                            "T-25.III. 지각과 선택", "T-25.IV. 네가 가져오는 빛", "T-25.V. 무죄 상태",
-                            "T-25.VI. 단일한 기능", "T-25.VII. 구원의 반석", "T-25.VIII. 사랑으로 돌아온 정의", "T-25.IX. 천국의 정의正義"
-                        ]
+                        sublist: ["T-25.in. 서문", "T-25.I. 진리로의 연결 고리", "T-25.II. 어둠에서 건져내는 구원자", "T-25.III. 지각과 선택", "T-25.IV. 네가 가져오는 빛", "T-25.V. 무죄 상태", "T-25.VI. 단일한 기능", "T-25.VII. 구원의 반석", "T-25.VIII. 사랑으로 돌아온 정의", "T-25.IX. 천국의 정의正義"]
                     },
                     {
                         title: "제26장 변환(272~281)",
-                        sublist: [
-                            "T-26.I. 하나님의 '희생'", 
-                            { title: "T-26.II. 수많은 형태 그리고 단 하나의 교정", playlist: ["audio_273_1.mp3", "audio_273_2.mp3"]},
-                            "T-26.III. 접경지대",
-                            "T-26.IV. 죄가 떠난 자리", "T-26.V. 작은 방해물", "T-26.VI. 정해진 친구",
-                            "T-26.VII. 치유의 법칙", "T-26.VIII. 즉시 오는 구원", "T-26.IX. 그들이 왔으므로", "T-26.X. 불의의 종말"
-                        ]
+                        sublist: ["T-26.I. 하나님의 '희생'", { title: "T-26.II. 수많은 형태 그리고 단 하나의 교정", playlist: ["audio_273_1.mp3", "audio_273_2.mp3"]}, "T-26.III. 접경지대", "T-26.IV. 죄가 떠난 자리", "T-26.V. 작은 방해물", "T-26.VI. 정해진 친구", "T-26.VII. 치유의 법칙", "T-26.VIII. 즉시 오는 구원", "T-26.IX. 그들이 왔으므로", "T-26.X. 불의의 종말"]
                     },
                     {
                         title: "제27장 꿈의 치유(284~291)",
-                        sublist: [
-                            {
-                                title: "T-27.I. 십자가 그림",
-                                playlist: ["audio_284_1.mp3", "audio_284_2.mp3"]
-                            }, 
-                            "T-27.II. 치유에 대한 두려움", "T-27.III. 모든 상징 너머",
-                            "T-27.IV. 고요한 답", "T-27.V. 치유의 모범", "T-27.VI. 죄의 증인들",
-                            {
-                                title: "T-27.VII. 꿈꾸는 자",
-                                playlist: ["audio_290_1.mp3", "audio_290_2.mp3"]
-                            },
-                            "T-27.VIII. 꿈의 '주인공'"
-                        ]
+                        sublist: [{ title: "T-27.I. 십자가 그림", playlist: ["audio_284_1.mp3", "audio_284_2.mp3"] }, "T-27.II. 치유에 대한 두려움", "T-27.III. 모든 상징 너머", "T-27.IV. 고요한 답", "T-27.V. 치유의 모범", "T-27.VI. 죄의 증인들", { title: "T-27.VII. 꿈꾸는 자", playlist: ["audio_290_1.mp3", "audio_290_2.mp3"] }, "T-27.VIII. 꿈의 '주인공'"]
                     },
                     {
                         title: "제28장 두려움의 해제(294~300)",
-                        sublist: [
-                            {title: "T-28.I. 현재의 기억", playlist: ["audio_294_1.mp3", "audio_294_2.mp3"]},
-                            "T-28.II. 결과와 원인의 역전", "T-28.III. 결합하기로 동의함",
-                            "T-28.IV. 더 위대한 결합", "T-28.V. 두려운 꿈의 대체자", "T-28.VI. 비밀 맹세", "T-28.VII. 안전의 방주"
-                        ]
+                        sublist: [{title: "T-28.I. 현재의 기억", playlist: ["audio_294_1.mp3", "audio_294_2.mp3"]}, "T-28.II. 결과와 원인의 역전", "T-28.III. 결합하기로 동의함", "T-28.IV. 더 위대한 결합", "T-28.V. 두려운 꿈의 대체자", "T-28.VI. 비밀 맹세", "T-28.VII. 안전의 방주"]
                     },
                     {
                         title: "제29장 깨어남(303~311)",
-                        sublist: [
-                            "T-29.I. 간격을 메움", "T-29.II. 손님이 오심", "T-29.III. 하나님의 증인",
-                            "T-29.IV. 꿈의 역할", "T-29.V. 변함없는 처소", "T-29.VI. 용서와 시간의 종말",
-                            "T-29.VII. 바깥에서 찾지 말라", "T-29.VIII. 적그리스도", "T-29.IX. 용서의 꿈"
-                        ]
+                        sublist: ["T-29.I. 간격을 메움", "T-29.II. 손님이 오심", "T-29.III. 하나님의 증인", "T-29.IV. 꿈의 역할", "T-29.V. 변함없는 처소", "T-29.VI. 용서와 시간의 종말", "T-29.VII. 바깥에서 찾지 말라", "T-29.VIII. 적그리스도", "T-29.IX. 용서의 꿈"]
                     },
                     {
                         title: "제30장 새로운 시작(314~322)",
-                        sublist: [
-                            "T-30.in. 서문", 
-                            {
-                                title: "T-30.I. 결정 규칙",
-                                playlist: ["audio_315_1.mp3", "audio_314_2.mp3"]
-                            },
-                            "T-30.II. 의지의 자유",
-                            "T-30.III. 모든 우상 너머", "T-30.IV. 허상 뒤의 진실", "T-30.V. 유일한 목적",
-                            "T-30.VI. 용서의 정당성", "T-30.VII. 새로운 해석", "T-30.VIII. 변함없는 실재"
-                        ]
+                        sublist: ["T-30.in. 서문", { title: "T-30.I. 결정 규칙", playlist: ["audio_315_1.mp3", "audio_314_2.mp3"] }, "T-30.II. 의지의 자유", "T-30.III. 모든 우상 너머", "T-30.IV. 허상 뒤의 진실", "T-30.V. 유일한 목적", "T-30.VI. 용서의 정당성", "T-30.VII. 새로운 해석", "T-30.VIII. 변함없는 실재"]
                     },
                     {
                         title: "제31장 마지막 비전(325~332)",
-                        sublist: [
-                            "T-31.I. 구원의 단순성", "T-31.II. 그리스도와의 동행", "T-31.III. 자신을 고소하는 자",
-                            { title: "T-31.IV. 진정한 대안", playlist: ["audio_328_1.mp3", "audio_328_2.mp3"]},
-                            { title:"T-31.V. 자아개념 대 자아", playlist: ["audio_329_1.mp3", "audio_329_2.mp3"]}, 
-                            "T-31.VI. 영을 인식함",
-                            { title:"T-31.VII. 구원자의 비전", playlist: ["audio_331_1.mp3", "audio_331_2.mp3"]},
-                            {title: "T-31.VIII. 다시 선택하라", playlist: ["audio_332_1.mp3","audio_332_2.mp3"]}
-                        ]
+                        sublist: ["T-31.I. 구원의 단순성", "T-31.II. 그리스도와의 동행", "T-31.III. 자신을 고소하는 자", { title: "T-31.IV. 진정한 대안", playlist: ["audio_328_1.mp3", "audio_328_2.mp3"]}, { title:"T-31.V. 자아개념 대 자아", playlist: ["audio_329_1.mp3", "audio_329_2.mp3"]}, "T-31.VI. 영을 인식함", { title:"T-31.VII. 구원자의 비전", playlist: ["audio_331_1.mp3", "audio_331_2.mp3"]}, {title: "T-31.VIII. 다시 선택하라", playlist: ["audio_332_1.mp3","audio_332_2.mp3"]}]
                     }
                 ]
             },
-            
             {
                 title: "연습서 1부",
-                sublist: [
-                    "연습서 서문", 
-                    "1~20과", "21~40과", "41~60과", "61~80과", "81~100과", 
-                    "101~120과", "121~140과", "141~160과", "161~180과", "181~200과", "201~220과"
-                ]
+                sublist: ["연습서 서문", "1~20과", "21~40과", "41~60과", "61~80과", "81~100과", "101~120과", "121~140과", "141~160과", "161~180과", "181~200과", "201~220과"]
             },
-            
             {
                 title: "연습서 2부",
-                sublist: [
-                    "221~240과", "241~260과", "261~280과", "281~300과", "301~320과", 
-                    "321~340과", "341~360과", "361~365과", "맺음말"
-                ]
+                sublist: ["221~240과", "241~260과", "261~280과", "281~300과", "301~320과", "321~340과", "341~360과", "361~365과", "맺음말"]
             },
-
             {
                 title: "부록",
                 sublist: [
                     {
                         title: "교사용 지침서",
-                        sublist: [
-                            "서문", "1. 하나님의 교사는 누구인가?", "2. 그들의 학생은 누구인가?", "3. 교육 수준이란 무엇인가?",
-                            "4. 하나님 교사의 특성은 무엇인가?", 
-                            {
-                                title: "5. 치유는 어떻게 이루어지는가?",
-                                sublist: [
-                                    "I. 지각된 병의 목적", "II. 지각의 변화", "III. 하나님 교사의 역할"
-                                ]
-                            },
-                            "6. 치유는 확실한가?", "7. 치유는 반복되어야 하는가?", "8. 어떻게 해야 난이도를 지각하지 않을 수 있을까?",
-                            "9. 하나님의 교사에게 생활 환경의 변화가 요구되는가?", "10. 어떻게 판단을 포기하는가?", "11. 이 세상에서 어떻게 평화가 가능한가?",
-                            "12. 세상을 구원하려면 하나님의 교사는 몇 명이 필요한가?", "13. 희생의 진정한 의미는 무엇인가?", "14. 세상은 어떻게 끝나는가?",
-                            "15. 최후에는 모두가 심판을 받는가?", "16. 하나님의 교사는 어떻게 하루를 보내야 하는가?", "17. 하나님의 교사는 마술적인 생각을 어떻게 다루는가?",
-                            "18. 교정은 어떻게 이루어지는가?", "19. 정의란 무엇인가?", "20. 하나님의 평화란 무엇인가?", "21. 말은 치유에서 어떤 역할을 하는가?",
-                            "22. 치유와 속죄는 어떤 관련이 있는가?", "23. 예수는 치유에서 특별한 위치에 있는가?", "24. 환생은 있는가?", "25. '초'능력은 바람직한가?",
-                            "26. 하나님께 직접 도달할 수 있는가?", "27. 죽음이란 무엇인가?", "28. 부활이란 무엇인가?", "29. 기타"
-                        ]
+                        sublist: ["서문", "1. 하나님의 교사는 누구인가?", "2. 그들의 학생은 누구인가?", "3. 교육 수준이란 무엇인가?", "4. 하나님 교사의 특성은 무엇인가?", { title: "5. 치유는 어떻게 이루어지는가?", sublist: ["I. 지각된 병의 목적", "II. 지각의 변화", "III. 하나님 교사의 역할"] }, "6. 치유는 확실한가?", "7. 치유는 반복되어야 하는가?", "8. 어떻게 해야 난이도를 지각하지 않을 수 있을까?", "9. 하나님의 교사에게 생활 환경의 변화가 요구되는가?", "10. 어떻게 판단을 포기하는가?", "11. 이 세상에서 어떻게 평화가 가능한가?", "12. 세상을 구원하려면 하나님의 교사는 몇 명이 필요한가?", "13. 희생의 진정한 의미는 무엇인가?", "14. 세상은 어떻게 끝나는가?", "15. 최후에는 모두가 심판을 받는가?", "16. 하나님의 교사는 어떻게 하루를 보내야 하는가?", "17. 하나님의 교사는 마술적인 생각을 어떻게 다루는가?", "18. 교정은 어떻게 이루어지는가?", "19. 정의란 무엇인가?", "20. 하나님의 평화란 무엇인가?", "21. 말은 치유에서 어떤 역할을 하는가?", "22. 치유와 속죄는 어떤 관련이 있는가?", "23. 예수는 치유에서 특별한 위치에 있는가?", "24. 환생은 있는가?", "25. '초'능력은 바람직한가?", "26. 하나님께 직접 도달할 수 있는가?", "27. 죽음이란 무엇인가?", "28. 부활이란 무엇인가?", "29. 기타"]
                     },
                     {
                         title: "용어 해설",
-                        sublist: [
-                            "서문", "1. 마음 - 영", "2. 에고와 기적", "3. 용서와 그리스도의 얼굴",
-                            "4. 참된 지각과 지식", "5. 예수 - 그리스도", "6. 성령", "맺음말"
-                        ]
+                        sublist: ["서문", "1. 마음 - 영", "2. 에고와 기적", "3. 용서와 그리스도의 얼굴", "4. 참된 지각과 지식", "5. 예수 - 그리스도", "6. 성령", "맺음말"]
                     },
                     {
                         title: "심리치료",
-                        sublist: [
-                            "서문",
-                            "1. 심리치료의 목적",
-                            {
-                                title: "2. 심리치료의 과정",
-                                sublist: [
-                                    "서문", "I. 심리치료의 한계", "II. 심리치료에서 종교의 위치", "III. 심리치료사의 역할",
-                                    "IV. 병의 경과", "V. 치유의 과정", "VI. 치유의 정의定義", "VII. 환자와 치료사의 이상적인 관계"
-                                ]
-                            },
-                            {
-                                title: "3. 심리치료의 실행",
-                                sublist: [
-                                    "I. 환자의 선정", "II. 심리치료는 전문직인가?", "III. 지불 문제"
-                                ]
-                            }
-                        ]
+                        sublist: ["서문", "1. 심리치료의 목적", { title: "2. 심리치료의 과정", sublist: ["서문", "I. 심리치료의 한계", "II. 심리치료에서 종교의 위치", "III. 심리치료사의 역할", "IV. 병의 경과", "V. 치유의 과정", "VI. 치유의 정의定義", "VII. 환자와 치료사의 이상적인 관계"] }, { title: "3. 심리치료의 실행", sublist: ["I. 환자의 선정", "II. 심리치료는 전문직인가?", "III. 지불 문제"] }]
                     },
                     {
                         title: "기도의 노래",
-                        sublist: [
-                            "서문",
-                             {
-                                title: "1. 기도",
-                                sublist: [
-                                    "서문",
-                                    "I. 진정한 기도",
-                                    "II. 기도의 사다리",
-                                    "III. 다른 사람을 위한 기도",
-                                    "IV. 다른 사람과 함께 드리는 기도",
-                                    "V. 사다리의 끝"
-                                ]
-                            },
-                            {
-                                title: "2. 용서",
-                                sublist: [
-                                    "서문",
-                                    "I. 너 자신을 용서하기",
-                                    "II. 파괴를 위한 용서",
-                                    "III. 구원을 위한 용서"
-                                ]
-                            },
-                            {
-                                title: "3. 치유",
-                                sublist: [
-                                    "서문",
-                                    "I. 질병의 원인",
-                                    "II. 거짓 치유와 진정한 치유",
-                                    "III. 분리 대 결합",
-                                    "IV. 치유의 거룩함"
-                                ]
-                            }
-                        ]
+                        sublist: ["서문", { title: "1. 기도", sublist: ["서문", "I. 진정한 기도", "II. 기도의 사다리", "III. 다른 사람을 위한 기도", "IV. 다른 사람과 함께 드리는 기도", "V. 사다리의 끝"] }, { title: "2. 용서", sublist: ["서문", "I. 너 자신을 용서하기", "II. 파괴를 위한 용서", "III. 구원을 위한 용서"] }, { title: "3. 치유", sublist: ["서문", "I. 질병의 원인", "II. 거짓 치유와 진정한 치유", "III. 분리 대 결합", "IV. 치유의 거룩함"] }]
                     }
                 ]
             }
@@ -1861,6 +1614,7 @@
             updateAllChecks();
         }
 
+        // (renderSubItem, renderDeepSubItem 유지 - 내부 getCheckIconHtml() 호출은 그대로 둠)
         function renderSubItem(subItem, subIdx, parentIndex, parentUl, getNextIndex, sectionName) {
             const subId = `audio_${getNextIndex()}`;
             const isObject = typeof subItem === 'object' && subItem !== null && !Array.isArray(subItem);
@@ -2256,29 +2010,586 @@
             });
         }
 
-        buildTOC();
 
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
-                btn.classList.add('active');
-                document.getElementById(btn.getAttribute('data-target')).classList.add('active');
-            });
-        });
+        // =====================================================================
+        // 🚀 앱 진입점 (Bootstrap): AppStorage를 초기화한 후에 모든 UI 이벤트 세팅
+        // =====================================================================
+        async function bootstrapApp() {
+            // DB 데이터를 메모리로 로드
+            await AppStorage.init();
+            
+            // 로딩 오버레이 제거
+            document.getElementById('app-loading').style.display = 'none';
+            
+            // UI 그리기 (메모리 캐시 사용)
+            buildTOC();
+            initUIEvents();
+        }
 
-        document.querySelectorAll('.modal-tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const targetModal = e.target.closest('.modal');
-                
-                targetModal.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
-                targetModal.querySelectorAll('.modal-tab-content').forEach(c => c.classList.remove('active'));
-                
-                btn.classList.add('active');
-                document.getElementById(btn.getAttribute('data-target')).classList.add('active');
+        // =====================================================================
+        // 🚀 DOM 이벤트 설정 및 드롭다운 초기화 함수 
+        // =====================================================================
+        function initUIEvents() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    btn.classList.add('active');
+                    document.getElementById(btn.getAttribute('data-target')).classList.add('active');
+                });
             });
-        });
+
+            document.querySelectorAll('.modal-tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetModal = e.target.closest('.modal');
+                    
+                    targetModal.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+                    targetModal.querySelectorAll('.modal-tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    btn.classList.add('active');
+                    document.getElementById(btn.getAttribute('data-target')).classList.add('active');
+                });
+            });
+
+            // --- Dropdowns ---
+            let generalSelectedId = generalChapters.length > 0 ? generalChapters[0].id : "";
+            const generalDropdown = setupCustomDropdown(
+                'custom-dropdown-general',
+                generalChapters,
+                (id) => { generalSelectedId = id; loadGeneralEditData(); },
+                "목차를 선택하세요"
+            );
+
+            // 🚀 localStorage -> AppStorage
+            function loadGeneralEditData() {
+                document.getElementById('edit-note-textarea').value = AppStorage.getItem(generalSelectedId + "_note") || "";
+                document.getElementById('edit-summary-textarea').value = AppStorage.getItem(generalSelectedId + "_summary") || "";
+                document.getElementById('edit-practice-textarea').value = AppStorage.getItem(generalSelectedId + "_practice") || "";
+            }
+
+            document.getElementById('open-general-edit-btn').addEventListener('click', () => {
+                if (generalChapters.length > 0) {
+                    if (!generalSelectedId) generalSelectedId = generalChapters[0].id;
+                    generalDropdown.setValue(generalSelectedId);
+                    loadGeneralEditData();
+                }
+                document.getElementById('edit-dropdown-container').style.display = 'block';
+                document.getElementById('edit-modal-header-title').textContent = "✏️ 일반 노트 편집";
+                resetModalTabs('#edit-modal-overlay');
+                const editModal = document.getElementById('edit-modal-overlay');
+                editModal.style.display = 'flex';
+                editModal.querySelector('.fullscreen-edit-body').scrollTop = 0;
+            });
+
+            document.getElementById('close-edit-modal').addEventListener('click', () => {
+                document.getElementById('edit-modal-overlay').style.display = 'none';
+            });
+
+            let wbSelectedId = workbookChapters.length > 0 ? workbookChapters[0].id : "";
+            const wbDropdown = setupCustomDropdown(
+                'custom-dropdown-wb',
+                workbookChapters,
+                (id) => { wbSelectedId = id; loadWbEditData(); },
+                "연습서를 선택하세요"
+            );
+
+            const wb2Epilogue = editableChapters.find(ch => ch.section === "연습서 2부" && ch.title === "맺음말");
+            const relatedOptions = [...textbookChapters];
+            if (wb2Epilogue) {
+                relatedOptions.push({ ...wb2Epilogue, title: "연습서 2부 맺음말" });
+            }
+            const relItemsWithNone = [{ id: "", title: "- 관련 교과서 선택 안함 -" }, ...relatedOptions];
+
+            let rel1Id = "", rel2Id = "", rel3Id = "";
+            const rel1Dropdown = setupCustomDropdown('custom-dropdown-rel1', relItemsWithNone, (id) => { rel1Id = id; }, "- 관련 교과서 선택 안함 -");
+            const rel2Dropdown = setupCustomDropdown('custom-dropdown-rel2', relItemsWithNone, (id) => { rel2Id = id; }, "- 관련 교과서 선택 안함 -");
+            const rel3Dropdown = setupCustomDropdown('custom-dropdown-rel3', relItemsWithNone, (id) => { rel3Id = id; }, "- 관련 교과서 선택 안함 -");
+
+            // 🚀 localStorage -> AppStorage
+            function loadWbEditData() {
+                document.getElementById('wb-note-textarea').value = AppStorage.getItem(wbSelectedId + "_note") || "";
+                document.getElementById('wb-summary-textarea').value = AppStorage.getItem(wbSelectedId + "_summary") || "";
+                document.getElementById('wb-practice-textarea').value = AppStorage.getItem(wbSelectedId + "_practice") || "";
+                
+                rel1Id = AppStorage.getItem(wbSelectedId + "_rel1") || "";
+                rel2Id = AppStorage.getItem(wbSelectedId + "_rel2") || "";
+                rel3Id = AppStorage.getItem(wbSelectedId + "_rel3") || "";
+                
+                rel1Dropdown.setValue(rel1Id);
+                rel2Dropdown.setValue(rel2Id);
+                rel3Dropdown.setValue(rel3Id);
+            }
+
+            document.getElementById('open-wb-edit-btn').addEventListener('click', () => {
+                if (workbookChapters.length > 0) {
+                    if (!wbSelectedId) wbSelectedId = workbookChapters[0].id;
+                    wbDropdown.setValue(wbSelectedId);
+                    loadWbEditData();
+                }
+                resetModalTabs('#wb-edit-modal-overlay');
+                const wbEditModal = document.getElementById('wb-edit-modal-overlay');
+                wbEditModal.style.display = 'flex';
+                wbEditModal.querySelector('.fullscreen-edit-body').scrollTop = 0;
+            });
+
+            document.getElementById('close-wb-edit-modal').addEventListener('click', () => {
+                document.getElementById('wb-edit-modal-overlay').style.display = 'none';
+            });
+
+            // 🚀 비동기(async) 로직 추가 
+            document.getElementById('reset-general-btn').addEventListener('click', async () => {
+                if (confirm("교과서 및 부록의 모든 학습 진행상황(체크 표시)을 초기화하시겠습니까?\n(작성하신 노트는 삭제되지 않습니다.)")) {
+                    for (const ch of editableChapters) {
+                        if (ch.section === "교과서" || ch.section === "부록") {
+                            await AppStorage.removeItem(ch.id + "_checked");
+                            const iconEl = document.getElementById(`check-icon-${ch.id}`);
+                            if (iconEl) iconEl.textContent = '';
+                        }
+                    }
+                    updateAllChecks();
+                    showToast("교과서 및 부록 진행상황이 초기화되었습니다.");
+                }
+            });
+
+            // 🚀 비동기(async) 로직 추가
+            document.getElementById('reset-wb-btn').addEventListener('click', async () => {
+                if (confirm("연습서의 모든 학습 진행상황(체크 표시)을 초기화하시겠습니까?\n(작성하신 노트는 삭제되지 않습니다.)")) {
+                    for (const ch of editableChapters) {
+                        if (ch.section === "연습서 1부" || ch.section === "연습서 2부") {
+                            await AppStorage.removeItem(ch.id + "_checked");
+                            const iconEl = document.getElementById(`check-icon-${ch.id}`);
+                            if (iconEl) iconEl.textContent = '';
+                        }
+                    }
+                    updateAllChecks();
+                    showToast("연습서 진행상황이 초기화되었습니다.");
+                }
+            });
+
+            // --- 오디오 플레이어 로직 및 UI 이벤트 바인딩 ---
+            // (이하 DOM 엘리먼트 가져오는 코드는 유지)
+            
+            // 재생 컨트롤 버튼들
+            playBtnEl.addEventListener('click', () => { readAudioPlayer.play(); });
+            pauseBtnEl.addEventListener('click', () => { readAudioPlayer.pause(); });
+            stopBtnEl.addEventListener('click', () => {
+                readAudioPlayer.pause();
+                readAudioPlayer.currentTime = 0;
+            });
+            backwardBtnEl.addEventListener('click', () => {
+                readAudioPlayer.currentTime = Math.max(0, readAudioPlayer.currentTime - 10);
+            });
+            forwardBtnEl.addEventListener('click', () => {
+                if (!isNaN(readAudioPlayer.duration)) {
+                    readAudioPlayer.currentTime = Math.min(readAudioPlayer.duration, readAudioPlayer.currentTime + 10);
+                }
+            });
+            
+            prevTrackBtnEl.addEventListener('click', () => {
+                if (currentPlaylist.length > 1) {
+                    if (currentPlaylistIndex > 0) {
+                        currentPlaylistIndex--;
+                        readAudioPlayer.src = `audio/${currentPlaylist[currentPlaylistIndex]}`;
+                        readAudioPlayer.play().catch(() => {
+                            const chapterObj = editableChapters.find(c => c.id === playingChapterId);
+                            const chapterTitle = chapterObj ? chapterObj.title : "알 수 없는 제목";
+                            showCustomAlert(`[${chapterTitle}]\n오디오 파일을 찾거나 재생할 수 없습니다.\n\n파일 이름: audio/${currentPlaylist[currentPlaylistIndex]}`);
+                        });
+                        showToast(`${currentPlaylistIndex + 1}번째 음성을 재생합니다.`);
+                    } else {
+                        readAudioPlayer.currentTime = 0;
+                        showToast("첫 번째 음성입니다.");
+                    }
+                } else {
+                    readAudioPlayer.currentTime = 0;
+                    showToast("단일 파일입니다.");
+                }
+            });
+
+            nextTrackBtnEl.addEventListener('click', () => {
+                if (currentPlaylist.length > 1) {
+                    if (currentPlaylistIndex < currentPlaylist.length - 1) {
+                        currentPlaylistIndex++;
+                        readAudioPlayer.src = `audio/${currentPlaylist[currentPlaylistIndex]}`;
+                        readAudioPlayer.play().catch(() => {
+                            const chapterObj = editableChapters.find(c => c.id === playingChapterId);
+                            const chapterTitle = chapterObj ? chapterObj.title : "알 수 없는 제목";
+                            showCustomAlert(`[${chapterTitle}]\n오디오 파일을 찾거나 재생할 수 없습니다.\n\n파일 이름: audio/${currentPlaylist[currentPlaylistIndex]}`);
+                        });
+                        showToast(`${currentPlaylistIndex + 1}번째 음성을 재생합니다.`);
+                    } else {
+                        showToast("마지막 음성입니다.");
+                    }
+                } else {
+                    showToast("단일 파일입니다.");
+                }
+            });
+
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.setActionHandler('play', function() {
+                    readAudioPlayer.play();
+                });
+                navigator.mediaSession.setActionHandler('pause', function() {
+                    readAudioPlayer.pause();
+                });
+                navigator.mediaSession.setActionHandler('previoustrack', function() {
+                    document.getElementById('audio-prev-track-btn').click();
+                });
+                navigator.mediaSession.setActionHandler('nexttrack', function() {
+                    document.getElementById('audio-next-track-btn').click();
+                });
+                navigator.mediaSession.setActionHandler('seekbackward', function() {
+                    document.getElementById('audio-backward-btn').click();
+                });
+                navigator.mediaSession.setActionHandler('seekforward', function() {
+                    document.getElementById('audio-forward-btn').click();
+                });
+            }
+
+            readAudioPlayer.addEventListener('timeupdate', () => {
+                if (!isNaN(readAudioPlayer.duration) && readAudioPlayer.duration > 0) {
+                    const percent = (readAudioPlayer.currentTime / readAudioPlayer.duration) * 100;
+                    progressBarEl.style.width = `${percent}%`;
+                    progressSliderEl.value = percent;
+                    currentTimeEl.textContent = formatTime(readAudioPlayer.currentTime);
+                    durationEl.textContent = formatTime(readAudioPlayer.duration);
+                }
+            });
+
+            progressSliderEl.addEventListener('input', (e) => {
+                if (!isNaN(readAudioPlayer.duration)) {
+                    const targetTime = (e.target.value / 100) * readAudioPlayer.duration;
+                    readAudioPlayer.currentTime = targetTime;
+                }
+            });
+
+            readAudioPlayer.addEventListener('loadedmetadata', () => {
+                durationEl.textContent = formatTime(readAudioPlayer.duration);
+            });
+
+            readAudioPlayer.addEventListener('play', () => {
+                playBtnEl.style.display = 'none';
+                pauseBtnEl.style.display = 'flex';
+                updateInlinePlayButtons();
+
+                if (readAudioPlayer.currentTime > 0 && !readAudioPlayer.ended) {
+                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                    if (isIOS) {
+                        readAudioPlayer.currentTime = readAudioPlayer.currentTime + 0.001; 
+                    }
+                }
+            });
+
+            readAudioPlayer.addEventListener('pause', () => {
+                playBtnEl.style.display = 'flex';
+                pauseBtnEl.style.display = 'none';
+                updateInlinePlayButtons();
+            });
+
+            readAudioPlayer.addEventListener('ended', () => {
+                if (currentPlaylist.length > 0 && currentPlaylistIndex < currentPlaylist.length - 1) {
+                    currentPlaylistIndex++;
+                    readAudioPlayer.src = `audio/${currentPlaylist[currentPlaylistIndex]}`;
+                    readAudioPlayer.play().catch(() => {
+                        const chapterObj = editableChapters.find(c => c.id === playingChapterId);
+                        const chapterTitle = chapterObj ? chapterObj.title : "알 수 없는 제목";
+                        showCustomAlert(`[${chapterTitle}]\n오디오 파일을 찾거나 재생할 수 없습니다.\n\n파일 이름: audio/${currentPlaylist[currentPlaylistIndex]}`);
+                    });
+                } else {
+                    playBtnEl.style.display = 'flex';
+                    pauseBtnEl.style.display = 'none';
+                    updateInlinePlayButtons();
+                }
+            });
+
+            // 🚀 비동기 저장 적용
+            document.getElementById('modal-check-btn').addEventListener('click', async () => {
+                if (!currentOpenedReadId) return;
+                
+                const isChecked = AppStorage.getItem(currentOpenedReadId + "_checked") === 'true';
+                const newState = !isChecked;
+                
+                if (newState) {
+                    await AppStorage.setItem(currentOpenedReadId + "_checked", "true");
+                    document.getElementById('modal-check-btn').classList.add('checked');
+                } else {
+                    await AppStorage.removeItem(currentOpenedReadId + "_checked");
+                    document.getElementById('modal-check-btn').classList.remove('checked');
+                }
+                
+                const iconEl = document.getElementById(`check-icon-${currentOpenedReadId}`);
+                if (iconEl) {
+                    iconEl.textContent = newState ? '✔️' : '';
+                }
+                
+                updateAllChecks();
+            });
+
+            document.getElementById('modal-inline-edit-btn').addEventListener('click', () => {
+                if (!currentOpenedReadId) return;
+                const chapterObj = editableChapters.find(c => c.id === currentOpenedReadId);
+                if (!chapterObj) return;
+
+                const isWb = (chapterObj.section === "연습서 1부" || chapterObj.section === "연습서 2부");
+
+                if (isWb) {
+                    wbSelectedId = currentOpenedReadId;
+                    wbDropdown.setValue(wbSelectedId);
+                    loadWbEditData();
+                    resetModalTabs('#wb-edit-modal-overlay');
+                    const wbEditModal = document.getElementById('wb-edit-modal-overlay');
+                    wbEditModal.style.display = 'flex';
+                    wbEditModal.querySelector('.fullscreen-edit-body').scrollTop = 0;
+                } else {
+                    generalSelectedId = currentOpenedReadId;
+                    generalDropdown.setValue(generalSelectedId);
+                    loadGeneralEditData();
+                    document.getElementById('edit-dropdown-container').style.display = 'none';
+                    document.getElementById('edit-modal-header-title').textContent = `✏️ ${chapterObj.title} 편집`;
+                    resetModalTabs('#edit-modal-overlay');
+                    const editModal = document.getElementById('edit-modal-overlay');
+                    editModal.style.display = 'flex';
+                    editModal.querySelector('.fullscreen-edit-body').scrollTop = 0;
+                }
+            });
+
+            returnAudioBtn.addEventListener('click', () => {
+                if (currentOpenedReadId) {
+                    loadAudio(currentOpenedReadId);
+                    readAudioPlayer.play();
+                    returnAudioBtn.style.display = 'none';
+                }
+            });
+
+            // 🚀 비동기 저장 적용
+            document.getElementById('save-btn').addEventListener('click', async () => {
+                if (!generalSelectedId) return;
+                const note = document.getElementById('edit-note-textarea').value;
+                const summary = document.getElementById('edit-summary-textarea').value;
+                const practice = document.getElementById('edit-practice-textarea').value;
+                
+                await AppStorage.setItem(generalSelectedId + "_note", note);
+                await AppStorage.setItem(generalSelectedId + "_summary", summary);
+                await AppStorage.setItem(generalSelectedId + "_practice", practice);
+                
+                showToast("성공적으로 저장되었습니다.");
+                
+                document.getElementById('edit-modal-overlay').style.display = 'none';
+                if (currentOpenedReadId) {
+                    openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
+                }
+            });
+
+            document.getElementById('gemini-general-btn').addEventListener('click', () => {
+                activeGeminiType = 'general';
+                document.getElementById('gemini-modal-title').textContent = "✨ 교과서 제미나이 질문 작성";
+                const savedPrompt = AppStorage.getItem("global_gemini_prompt_general") || "";
+                document.getElementById('gemini-prompt-textarea').value = savedPrompt;
+                geminiModal.style.display = 'flex';
+            });
+
+            document.getElementById('gemini-btn').addEventListener('click', () => {
+                activeGeminiType = 'wb';
+                document.getElementById('gemini-modal-title').textContent = "✨ 연습서 제미나이 질문 작성";
+                const savedPrompt = AppStorage.getItem("global_gemini_prompt_wb") || "";
+                document.getElementById('gemini-prompt-textarea').value = savedPrompt;
+                geminiModal.style.display = 'flex';
+            });
+
+            document.getElementById('close-gemini-modal').addEventListener('click', () => {
+                geminiModal.style.display = 'none';
+            });
+
+            // 🚀 비동기 저장 적용
+            document.getElementById('save-gemini-btn').addEventListener('click', async () => {
+                const prompt = document.getElementById('gemini-prompt-textarea').value;
+                if (activeGeminiType === 'general') {
+                    await AppStorage.setItem("global_gemini_prompt_general", prompt);
+                } else {
+                    await AppStorage.setItem("global_gemini_prompt_wb", prompt);
+                }
+                geminiModal.style.display = 'none';
+                showToast("제미나이 질문이 저장되었습니다.");
+            });
+
+            document.getElementById('copy-general-btn').addEventListener('click', () => {
+                const noteText = document.getElementById('edit-note-textarea').value;
+                const geminiText = AppStorage.getItem("global_gemini_prompt_general") || document.getElementById('gemini-prompt-textarea').value; 
+                
+                const textToCopy = `[본문 내용]\n${noteText}\n\n[제미나이 질문]\n${geminiText}`;
+                
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showToast("복사되었습니다.");
+                }).catch(err => {
+                    showCustomAlert("복사에 실패했습니다: " + err);
+                });
+            });
+
+            // 🚀 비동기 저장 적용
+            document.getElementById('save-wb-btn').addEventListener('click', async () => {
+                if (!wbSelectedId) return;
+                const note = document.getElementById('wb-note-textarea').value;
+                const summary = document.getElementById('wb-summary-textarea').value;
+                const practice = document.getElementById('wb-practice-textarea').value;
+                
+                await AppStorage.setItem(wbSelectedId + "_note", note);
+                await AppStorage.setItem(wbSelectedId + "_summary", summary);
+                await AppStorage.setItem(wbSelectedId + "_practice", practice);
+                await AppStorage.setItem(wbSelectedId + "_rel1", rel1Dropdown.getValue());
+                await AppStorage.setItem(wbSelectedId + "_rel2", rel2Dropdown.getValue());
+                await AppStorage.setItem(wbSelectedId + "_rel3", rel3Dropdown.getValue());
+
+                showToast("성공적으로 저장되었습니다.");
+                
+                document.getElementById('wb-edit-modal-overlay').style.display = 'none';
+                if (currentOpenedReadId) {
+                    openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
+                }
+            });
+
+            document.getElementById('copy-btn').addEventListener('click', () => {
+                const noteText = document.getElementById('wb-note-textarea').value;
+                const geminiText = AppStorage.getItem("global_gemini_prompt_wb") || document.getElementById('gemini-prompt-textarea').value; 
+                
+                const textToCopy = `[본문 내용]\n${noteText}\n\n[제미나이 질문]\n${geminiText}`;
+                
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showToast("복사되었습니다.");
+                }).catch(err => {
+                    showCustomAlert("복사에 실패했습니다: " + err);
+                });
+            });
+            
+            // 🚀 백업: localStorage 순회 -> AppStorage.keys() 사용
+            document.getElementById('backup-note-btn').addEventListener('click', () => handleBackup(false));
+            document.getElementById('backup-summary-btn').addEventListener('click', () => handleBackup(true));
+            
+            // 🚀 복원 로직 연결
+            document.getElementById('restore-note-input').addEventListener('change', (e) => handleRestore(e, false));
+            document.getElementById('restore-summary-input').addEventListener('change', (e) => handleRestore(e, true));
+
+            document.getElementById('close-read-modal').addEventListener('click', () => {
+                if (modalHistory.length > 0) {
+                    const prev = modalHistory.pop();
+                    openReadModal(prev.title, prev.id, true);
+                } else {
+                    readAudioPlayer.pause();
+                    readModalOverlay.style.display = 'none';
+                }
+            });
+
+            window.addEventListener('click', (e) => {
+                if (e.target === readModalOverlay) {
+                    if (modalHistory.length > 0) {
+                        const prev = modalHistory.pop();
+                        openReadModal(prev.title, prev.id, true);
+                    } else {
+                        readAudioPlayer.pause();
+                        readModalOverlay.style.display = 'none';
+                    }
+                }
+                if (e.target === document.getElementById('edit-modal-overlay')) {
+                    document.getElementById('edit-modal-overlay').style.display = 'none';
+                    if (currentOpenedReadId) {
+                        openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
+                    }
+                }
+                if (e.target === document.getElementById('wb-edit-modal-overlay')) {
+                    document.getElementById('wb-edit-modal-overlay').style.display = 'none';
+                    if (currentOpenedReadId) {
+                        openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
+                    }
+                }
+                if (e.target === geminiModal) {
+                    geminiModal.style.display = 'none';
+                }
+                document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open'));
+            });
+
+            document.getElementById('close-edit-modal').addEventListener('click', () => {
+                document.getElementById('edit-modal-overlay').style.display = 'none';
+                if (currentOpenedReadId) {
+                    openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
+                }
+            });
+
+            document.getElementById('close-wb-edit-modal').addEventListener('click', () => {
+                document.getElementById('wb-edit-modal-overlay').style.display = 'none';
+                if (currentOpenedReadId) {
+                    openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
+                }
+            });
+
+            closeBarBtn.addEventListener('click', () => {
+                bottomEditBar.classList.add('hidden');
+                menuFab.classList.remove('hidden');
+            });
+
+            menuFab.addEventListener('click', () => {
+                bottomEditBar.classList.remove('hidden');
+                menuFab.classList.add('hidden');
+            });
+
+            // 스와이프 이벤트 설정
+            ebookBody.addEventListener('touchstart', (e) => {
+                if (!currentOpenedReadId) return;
+                
+                if (e.target.closest('button, input, .related-section, .related-item')) {
+                    isSwiping = false;
+                    return;
+                }
+
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                isSwiping = true;
+                modalContentWrapper.style.transition = 'none';
+            }, { passive: true });
+
+            ebookBody.addEventListener('touchmove', (e) => {
+                if (!isSwiping) return;
+                currentX = e.touches[0].clientX;
+                const currentY = e.touches[0].clientY;
+                
+                const xDiff = currentX - touchStartX;
+                const yDiff = Math.abs(currentY - touchStartY);
+
+                if (Math.abs(xDiff) > yDiff && Math.abs(xDiff) > 15) {
+                    modalContentWrapper.style.transform = `translateX(${xDiff}px)`;
+                    modalContentWrapper.style.boxShadow = xDiff > 0 ? '15px 0 30px rgba(0,0,0,0.2)' : '-15px 0 30px rgba(0,0,0,0.2)';
+                }
+            }, { passive: true });
+
+            ebookBody.addEventListener('touchend', (e) => {
+                if (!isSwiping) return;
+                isSwiping = false;
+
+                const xDiff = currentX - touchStartX;
+                const yDiff = Math.abs(e.changedTouches[0].clientY - touchStartY);
+                const threshold = window.innerWidth * 0.25;
+
+                modalContentWrapper.style.transition = 'transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease';
+
+                if (Math.abs(xDiff) > yDiff && Math.abs(xDiff) > threshold) {
+                    if (xDiff > 0) {
+                        modalContentWrapper.style.transform = `translateX(100%)`;
+                        setTimeout(() => { navigateChapter(-1, 'right'); }, 50);
+                    } else {
+                        modalContentWrapper.style.transform = `translateX(-100%)`;
+                        setTimeout(() => { navigateChapter(1, 'left'); }, 50);
+                    }
+                } else {
+                    modalContentWrapper.style.transform = 'translateX(0)';
+                    modalContentWrapper.style.boxShadow = '0 0 25px rgba(0,0,0,0.15)';
+                }
+            }, { passive: true });
+
+        } // initUIEvents() 끝
+
+
+        // ====================================================================
+        // 유틸 함수들 
+        // ====================================================================
 
         function resetModalTabs(containerSelector) {
             const container = document.querySelector(containerSelector);
@@ -2354,326 +2665,6 @@
                 getValue: () => selectedValue
             };
         }
-
-        window.addEventListener('click', () => {
-            document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open'));
-        });
-
-        let generalSelectedId = generalChapters.length > 0 ? generalChapters[0].id : "";
-        const generalDropdown = setupCustomDropdown(
-            'custom-dropdown-general',
-            generalChapters,
-            (id) => { generalSelectedId = id; loadGeneralEditData(); },
-            "목차를 선택하세요"
-        );
-
-        function loadGeneralEditData() {
-            document.getElementById('edit-note-textarea').value = localStorage.getItem(generalSelectedId + "_note") || "";
-            document.getElementById('edit-summary-textarea').value = localStorage.getItem(generalSelectedId + "_summary") || "";
-            document.getElementById('edit-practice-textarea').value = localStorage.getItem(generalSelectedId + "_practice") || "";
-        }
-
-        document.getElementById('open-general-edit-btn').addEventListener('click', () => {
-            if (generalChapters.length > 0) {
-                if (!generalSelectedId) generalSelectedId = generalChapters[0].id;
-                generalDropdown.setValue(generalSelectedId);
-                loadGeneralEditData();
-            }
-            document.getElementById('edit-dropdown-container').style.display = 'block';
-            document.getElementById('edit-modal-header-title').textContent = "✏️ 일반 노트 편집";
-            resetModalTabs('#edit-modal-overlay');
-            const editModal = document.getElementById('edit-modal-overlay');
-            editModal.style.display = 'flex';
-            editModal.querySelector('.fullscreen-edit-body').scrollTop = 0;
-        });
-
-        document.getElementById('close-edit-modal').addEventListener('click', () => {
-            document.getElementById('edit-modal-overlay').style.display = 'none';
-        });
-
-        let wbSelectedId = workbookChapters.length > 0 ? workbookChapters[0].id : "";
-        const wbDropdown = setupCustomDropdown(
-            'custom-dropdown-wb',
-            workbookChapters,
-            (id) => { wbSelectedId = id; loadWbEditData(); },
-            "연습서를 선택하세요"
-        );
-
-        const wb2Epilogue = editableChapters.find(ch => ch.section === "연습서 2부" && ch.title === "맺음말");
-        const relatedOptions = [...textbookChapters];
-        if (wb2Epilogue) {
-            relatedOptions.push({ ...wb2Epilogue, title: "연습서 2부 맺음말" });
-        }
-        const relItemsWithNone = [{ id: "", title: "- 관련 교과서 선택 안함 -" }, ...relatedOptions];
-
-        let rel1Id = "", rel2Id = "", rel3Id = "";
-        const rel1Dropdown = setupCustomDropdown('custom-dropdown-rel1', relItemsWithNone, (id) => { rel1Id = id; }, "- 관련 교과서 선택 안함 -");
-        const rel2Dropdown = setupCustomDropdown('custom-dropdown-rel2', relItemsWithNone, (id) => { rel2Id = id; }, "- 관련 교과서 선택 안함 -");
-        const rel3Dropdown = setupCustomDropdown('custom-dropdown-rel3', relItemsWithNone, (id) => { rel3Id = id; }, "- 관련 교과서 선택 안함 -");
-
-        function loadWbEditData() {
-            document.getElementById('wb-note-textarea').value = localStorage.getItem(wbSelectedId + "_note") || "";
-            document.getElementById('wb-summary-textarea').value = localStorage.getItem(wbSelectedId + "_summary") || "";
-            document.getElementById('wb-practice-textarea').value = localStorage.getItem(wbSelectedId + "_practice") || "";
-            
-            rel1Id = localStorage.getItem(wbSelectedId + "_rel1") || "";
-            rel2Id = localStorage.getItem(wbSelectedId + "_rel2") || "";
-            rel3Id = localStorage.getItem(wbSelectedId + "_rel3") || "";
-            
-            rel1Dropdown.setValue(rel1Id);
-            rel2Dropdown.setValue(rel2Id);
-            rel3Dropdown.setValue(rel3Id);
-        }
-
-        document.getElementById('open-wb-edit-btn').addEventListener('click', () => {
-            if (workbookChapters.length > 0) {
-                if (!wbSelectedId) wbSelectedId = workbookChapters[0].id;
-                wbDropdown.setValue(wbSelectedId);
-                loadWbEditData();
-            }
-            resetModalTabs('#wb-edit-modal-overlay');
-            const wbEditModal = document.getElementById('wb-edit-modal-overlay');
-            wbEditModal.style.display = 'flex';
-            wbEditModal.querySelector('.fullscreen-edit-body').scrollTop = 0;
-        });
-
-        document.getElementById('close-wb-edit-modal').addEventListener('click', () => {
-            document.getElementById('wb-edit-modal-overlay').style.display = 'none';
-        });
-
-        document.getElementById('reset-general-btn').addEventListener('click', () => {
-            if (confirm("교과서 및 부록의 모든 학습 진행상황(체크 표시)을 초기화하시겠습니까?\n(작성하신 노트는 삭제되지 않습니다.)")) {
-                editableChapters.forEach(ch => {
-                    if (ch.section === "교과서" || ch.section === "부록") {
-                        localStorage.removeItem(ch.id + "_checked");
-                        const iconEl = document.getElementById(`check-icon-${ch.id}`);
-                        if (iconEl) iconEl.textContent = '';
-                    }
-                });
-                updateAllChecks();
-                showToast("교과서 및 부록 진행상황이 초기화되었습니다.");
-            }
-        });
-
-        document.getElementById('reset-wb-btn').addEventListener('click', () => {
-            if (confirm("연습서의 모든 학습 진행상황(체크 표시)을 초기화하시겠습니까?\n(작성하신 노트는 삭제되지 않습니다.)")) {
-                editableChapters.forEach(ch => {
-                    if (ch.section === "연습서 1부" || ch.section === "연습서 2부") {
-                        localStorage.removeItem(ch.id + "_checked");
-                        const iconEl = document.getElementById(`check-icon-${ch.id}`);
-                        if (iconEl) iconEl.textContent = '';
-                    }
-                });
-                updateAllChecks();
-                showToast("연습서 진행상황이 초기화되었습니다.");
-            }
-        });
-
-        const readModalOverlay = document.getElementById('read-modal-overlay');
-        const readAudioPlayer = document.getElementById('read-audio-player');
-        
-        const prevTrackBtnEl = document.getElementById('audio-prev-track-btn');
-        const playBtnEl = document.getElementById('audio-play-btn');
-        const pauseBtnEl = document.getElementById('audio-pause-btn');
-        const stopBtnEl = document.getElementById('audio-stop-btn');
-        const backwardBtnEl = document.getElementById('audio-backward-btn');
-        const forwardBtnEl = document.getElementById('audio-forward-btn');
-        const nextTrackBtnEl = document.getElementById('audio-next-track-btn');
-        
-        const currentTimeEl = document.getElementById('audio-current-time');
-        const durationEl = document.getElementById('audio-duration');
-        const progressBarEl = document.getElementById('audio-progress-bar');
-        const progressSliderEl = document.getElementById('audio-progress-slider');
-        const returnAudioBtn = document.getElementById('return-audio-btn');
-
-        function formatTime(seconds) {
-            if (isNaN(seconds)) return "00:00";
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60);
-            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        }
-
-        playBtnEl.addEventListener('click', () => { readAudioPlayer.play(); });
-        pauseBtnEl.addEventListener('click', () => { readAudioPlayer.pause(); });
-        stopBtnEl.addEventListener('click', () => {
-            readAudioPlayer.pause();
-            readAudioPlayer.currentTime = 0;
-        });
-        backwardBtnEl.addEventListener('click', () => {
-            readAudioPlayer.currentTime = Math.max(0, readAudioPlayer.currentTime - 10);
-        });
-        forwardBtnEl.addEventListener('click', () => {
-            if (!isNaN(readAudioPlayer.duration)) {
-                readAudioPlayer.currentTime = Math.min(readAudioPlayer.duration, readAudioPlayer.currentTime + 10);
-            }
-        });
-        
-        prevTrackBtnEl.addEventListener('click', () => {
-            if (currentPlaylist.length > 1) {
-                if (currentPlaylistIndex > 0) {
-                    currentPlaylistIndex--;
-                    readAudioPlayer.src = `audio/${currentPlaylist[currentPlaylistIndex]}`;
-                    readAudioPlayer.play().catch(() => {
-                        const chapterObj = editableChapters.find(c => c.id === playingChapterId);
-                        const chapterTitle = chapterObj ? chapterObj.title : "알 수 없는 제목";
-                        showCustomAlert(`[${chapterTitle}]\n오디오 파일을 찾거나 재생할 수 없습니다.\n\n파일 이름: audio/${currentPlaylist[currentPlaylistIndex]}`);
-                    });
-                    showToast(`${currentPlaylistIndex + 1}번째 음성을 재생합니다.`);
-                } else {
-                    readAudioPlayer.currentTime = 0;
-                    showToast("첫 번째 음성입니다.");
-                }
-            } else {
-                readAudioPlayer.currentTime = 0;
-                showToast("단일 파일입니다.");
-            }
-        });
-
-        nextTrackBtnEl.addEventListener('click', () => {
-            if (currentPlaylist.length > 1) {
-                if (currentPlaylistIndex < currentPlaylist.length - 1) {
-                    currentPlaylistIndex++;
-                    readAudioPlayer.src = `audio/${currentPlaylist[currentPlaylistIndex]}`;
-                    readAudioPlayer.play().catch(() => {
-                        const chapterObj = editableChapters.find(c => c.id === playingChapterId);
-                        const chapterTitle = chapterObj ? chapterObj.title : "알 수 없는 제목";
-                        showCustomAlert(`[${chapterTitle}]\n오디오 파일을 찾거나 재생할 수 없습니다.\n\n파일 이름: audio/${currentPlaylist[currentPlaylistIndex]}`);
-                    });
-                    showToast(`${currentPlaylistIndex + 1}번째 음성을 재생합니다.`);
-                } else {
-                    showToast("마지막 음성입니다.");
-                }
-            } else {
-                showToast("단일 파일입니다.");
-            }
-        });
-
-        if ('mediaSession' in navigator) {
-            navigator.mediaSession.setActionHandler('play', function() {
-                readAudioPlayer.play();
-            });
-            navigator.mediaSession.setActionHandler('pause', function() {
-                readAudioPlayer.pause();
-            });
-            navigator.mediaSession.setActionHandler('previoustrack', function() {
-                document.getElementById('audio-prev-track-btn').click();
-            });
-            navigator.mediaSession.setActionHandler('nexttrack', function() {
-                document.getElementById('audio-next-track-btn').click();
-            });
-            navigator.mediaSession.setActionHandler('seekbackward', function() {
-                document.getElementById('audio-backward-btn').click();
-            });
-            navigator.mediaSession.setActionHandler('seekforward', function() {
-                document.getElementById('audio-forward-btn').click();
-            });
-        }
-
-        readAudioPlayer.addEventListener('timeupdate', () => {
-            if (!isNaN(readAudioPlayer.duration) && readAudioPlayer.duration > 0) {
-                const percent = (readAudioPlayer.currentTime / readAudioPlayer.duration) * 100;
-                progressBarEl.style.width = `${percent}%`;
-                progressSliderEl.value = percent;
-                currentTimeEl.textContent = formatTime(readAudioPlayer.currentTime);
-                durationEl.textContent = formatTime(readAudioPlayer.duration);
-            }
-        });
-
-        progressSliderEl.addEventListener('input', (e) => {
-            if (!isNaN(readAudioPlayer.duration)) {
-                const targetTime = (e.target.value / 100) * readAudioPlayer.duration;
-                readAudioPlayer.currentTime = targetTime;
-            }
-        });
-
-        readAudioPlayer.addEventListener('loadedmetadata', () => {
-            durationEl.textContent = formatTime(readAudioPlayer.duration);
-        });
-
-        readAudioPlayer.addEventListener('play', () => {
-            playBtnEl.style.display = 'none';
-            pauseBtnEl.style.display = 'flex';
-            updateInlinePlayButtons();
-
-            if (readAudioPlayer.currentTime > 0 && !readAudioPlayer.ended) {
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                if (isIOS) {
-                    readAudioPlayer.currentTime = readAudioPlayer.currentTime + 0.001; 
-                }
-            }
-        });
-
-        readAudioPlayer.addEventListener('pause', () => {
-            playBtnEl.style.display = 'flex';
-            pauseBtnEl.style.display = 'none';
-            updateInlinePlayButtons();
-        });
-
-        readAudioPlayer.addEventListener('ended', () => {
-            if (currentPlaylist.length > 0 && currentPlaylistIndex < currentPlaylist.length - 1) {
-                currentPlaylistIndex++;
-                readAudioPlayer.src = `audio/${currentPlaylist[currentPlaylistIndex]}`;
-                readAudioPlayer.play().catch(() => {
-                    const chapterObj = editableChapters.find(c => c.id === playingChapterId);
-                    const chapterTitle = chapterObj ? chapterObj.title : "알 수 없는 제목";
-                    showCustomAlert(`[${chapterTitle}]\n오디오 파일을 찾거나 재생할 수 없습니다.\n\n파일 이름: audio/${currentPlaylist[currentPlaylistIndex]}`);
-                });
-            } else {
-                playBtnEl.style.display = 'flex';
-                pauseBtnEl.style.display = 'none';
-                updateInlinePlayButtons();
-            }
-        });
-
-        document.getElementById('modal-check-btn').addEventListener('click', () => {
-            if (!currentOpenedReadId) return;
-            
-            const isChecked = localStorage.getItem(currentOpenedReadId + "_checked") === 'true';
-            const newState = !isChecked;
-            
-            if (newState) {
-                localStorage.setItem(currentOpenedReadId + "_checked", "true");
-                document.getElementById('modal-check-btn').classList.add('checked');
-            } else {
-                localStorage.removeItem(currentOpenedReadId + "_checked");
-                document.getElementById('modal-check-btn').classList.remove('checked');
-            }
-            
-            const iconEl = document.getElementById(`check-icon-${currentOpenedReadId}`);
-            if (iconEl) {
-                iconEl.textContent = newState ? '✔️' : '';
-            }
-            
-            updateAllChecks();
-        });
-
-        document.getElementById('modal-inline-edit-btn').addEventListener('click', () => {
-            if (!currentOpenedReadId) return;
-            const chapterObj = editableChapters.find(c => c.id === currentOpenedReadId);
-            if (!chapterObj) return;
-
-            const isWb = (chapterObj.section === "연습서 1부" || chapterObj.section === "연습서 2부");
-
-            if (isWb) {
-                wbSelectedId = currentOpenedReadId;
-                wbDropdown.setValue(wbSelectedId);
-                loadWbEditData();
-                resetModalTabs('#wb-edit-modal-overlay');
-                const wbEditModal = document.getElementById('wb-edit-modal-overlay');
-                wbEditModal.style.display = 'flex';
-                wbEditModal.querySelector('.fullscreen-edit-body').scrollTop = 0;
-            } else {
-                generalSelectedId = currentOpenedReadId;
-                generalDropdown.setValue(generalSelectedId);
-                loadGeneralEditData();
-                document.getElementById('edit-dropdown-container').style.display = 'none';
-                document.getElementById('edit-modal-header-title').textContent = `✏️ ${chapterObj.title} 편집`;
-                resetModalTabs('#edit-modal-overlay');
-                const editModal = document.getElementById('edit-modal-overlay');
-                editModal.style.display = 'flex';
-                editModal.querySelector('.fullscreen-edit-body').scrollTop = 0;
-            }
-        });
 
         function formatSummaryAndPracticeText(text) {
             let processed = text.replace(/>/g, '').replace(/</g, '&lt;');
@@ -2752,7 +2743,8 @@
             currentOpenedReadId = id;
             
             const checkBtn = document.getElementById('modal-check-btn');
-            if (localStorage.getItem(id + "_checked") === 'true') {
+            // 🚀 localStorage -> AppStorage
+            if (AppStorage.getItem(id + "_checked") === 'true') {
                 checkBtn.classList.add('checked');
             } else {
                 checkBtn.classList.remove('checked');
@@ -2761,7 +2753,6 @@
             returnAudioBtn.style.display = 'none';
             resetModalTabs('#read-modal-overlay');
             
-            // 📌 본문 내용 포맷팅 함수 (번호 감지 스타일 적용)
             const formatNoteContent = (text) => {
                 let processedText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 processedText = processedText.replace(/(["“”])([^\s"“”][^"“”]*?[^\s"“”]|[^\s"“”])(["“”])/g, '<span style="display: block; text-align: center; color: #38A169;">$1<span style="font-weight: 600; font-style: italic;">$2</span>$3</span>');
@@ -2783,7 +2774,6 @@
                         return `<span style="font-size:1.1em; font-weight: 600;">${cleanedLine}</span>`;
                     }
                     
-                    // 본문 전용 번호 항목 키우기
                     if (/^\s*(?:[A-Z0-9\-]+\.)+\s+/.test(rawText) || /^\s*\d+\.\s+/.test(rawText)) {
                         return `<span class="note-main-number">${line}</span>`;
                     } else if (/^\s*(?:\([0-9a-zA-Z]+\)|[0-9a-zA-Z]+\))\s+/.test(rawText)) {
@@ -2795,7 +2785,8 @@
                 return lines.join('<br>');
             };
 
-            const savedNote = localStorage.getItem(id + "_note");
+            // 🚀 localStorage -> AppStorage
+            const savedNote = AppStorage.getItem(id + "_note");
             const noteEl = document.getElementById('read-note-content');
             if (savedNote && savedNote.trim() !== "") {
                 noteEl.innerHTML = formatNoteContent(savedNote); 
@@ -2805,7 +2796,7 @@
                 noteEl.style.color = "#A0AEC0";
             }
 
-            const savedSummary = localStorage.getItem(id + "_summary");
+            const savedSummary = AppStorage.getItem(id + "_summary");
             const summaryEl = document.getElementById('read-summary-content');
             if (savedSummary && savedSummary.trim() !== "") {
                 summaryEl.innerHTML = formatSummaryAndPracticeText(savedSummary);
@@ -2815,7 +2806,7 @@
                 summaryEl.style.color = "#A0AEC0";
             }
 
-            const savedPractice = localStorage.getItem(id + "_practice");
+            const savedPractice = AppStorage.getItem(id + "_practice");
             const practiceEl = document.getElementById('read-practice-content');
             if (practiceEl) {
                 if (savedPractice && savedPractice.trim() !== "") {
@@ -2834,9 +2825,9 @@
             const chapterObj = editableChapters.find(c => c.id === id);
             
             if (chapterObj && (chapterObj.section === "연습서 1부" || chapterObj.section === "연습서 2부")) {
-                const r1 = localStorage.getItem(id + "_rel1");
-                const r2 = localStorage.getItem(id + "_rel2");
-                const r3 = localStorage.getItem(id + "_rel3");
+                const r1 = AppStorage.getItem(id + "_rel1");
+                const r2 = AppStorage.getItem(id + "_rel2");
+                const r3 = AppStorage.getItem(id + "_rel3");
                 const relatedIds = [r1, r2, r3].filter(Boolean);
                 
                 if (relatedIds.length > 0) {
@@ -2908,13 +2899,40 @@
             }
         }
 
-        returnAudioBtn.addEventListener('click', () => {
-            if (currentOpenedReadId) {
-                loadAudio(currentOpenedReadId);
-                readAudioPlayer.play();
-                returnAudioBtn.style.display = 'none';
-            }
-        });
+        const readModalOverlay = document.getElementById('read-modal-overlay');
+        const readAudioPlayer = document.getElementById('read-audio-player');
+        
+        const prevTrackBtnEl = document.getElementById('audio-prev-track-btn');
+        const playBtnEl = document.getElementById('audio-play-btn');
+        const pauseBtnEl = document.getElementById('audio-pause-btn');
+        const stopBtnEl = document.getElementById('audio-stop-btn');
+        const backwardBtnEl = document.getElementById('audio-backward-btn');
+        const forwardBtnEl = document.getElementById('audio-forward-btn');
+        const nextTrackBtnEl = document.getElementById('audio-next-track-btn');
+        
+        const currentTimeEl = document.getElementById('audio-current-time');
+        const durationEl = document.getElementById('audio-duration');
+        const progressBarEl = document.getElementById('audio-progress-bar');
+        const progressSliderEl = document.getElementById('audio-progress-slider');
+        const returnAudioBtn = document.getElementById('return-audio-btn');
+        const geminiModal = document.getElementById('gemini-modal-overlay');
+        const bottomEditBar = document.getElementById('bottom-edit-bar');
+        const menuFab = document.getElementById('menu-fab');
+        const closeBarBtn = document.getElementById('close-bar-btn');
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let currentX = 0;
+        let isSwiping = false;
+        const modalContentWrapper = document.getElementById('modal-content-wrapper');
+        const ebookBody = document.getElementById('ebook-body');
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "00:00";
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
 
         function loadAudio(id) {
             const chapterObj = editableChapters.find(c => c.id === id);
@@ -2993,116 +3011,20 @@
             }
         }
 
-        document.getElementById('save-btn').addEventListener('click', () => {
-            if (!generalSelectedId) return;
-            const note = document.getElementById('edit-note-textarea').value;
-            const summary = document.getElementById('edit-summary-textarea').value;
-            const practice = document.getElementById('edit-practice-textarea').value;
-            
-            localStorage.setItem(generalSelectedId + "_note", note);
-            localStorage.setItem(generalSelectedId + "_summary", summary);
-            localStorage.setItem(generalSelectedId + "_practice", practice);
-            showToast("성공적으로 저장되었습니다.");
-            
-            document.getElementById('edit-modal-overlay').style.display = 'none';
-            if (currentOpenedReadId) {
-                openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
-            }
-        });
-
-        const geminiModal = document.getElementById('gemini-modal-overlay');
-
-        document.getElementById('gemini-general-btn').addEventListener('click', () => {
-            activeGeminiType = 'general';
-            document.getElementById('gemini-modal-title').textContent = "✨ 교과서 제미나이 질문 작성";
-            const savedPrompt = localStorage.getItem("global_gemini_prompt_general") || "";
-            document.getElementById('gemini-prompt-textarea').value = savedPrompt;
-            geminiModal.style.display = 'flex';
-        });
-
-        document.getElementById('gemini-btn').addEventListener('click', () => {
-            activeGeminiType = 'wb';
-            document.getElementById('gemini-modal-title').textContent = "✨ 연습서 제미나이 질문 작성";
-            const savedPrompt = localStorage.getItem("global_gemini_prompt_wb") || "";
-            document.getElementById('gemini-prompt-textarea').value = savedPrompt;
-            geminiModal.style.display = 'flex';
-        });
-
-        document.getElementById('close-gemini-modal').addEventListener('click', () => {
-            geminiModal.style.display = 'none';
-        });
-
-        document.getElementById('save-gemini-btn').addEventListener('click', () => {
-            const prompt = document.getElementById('gemini-prompt-textarea').value;
-            if (activeGeminiType === 'general') {
-                localStorage.setItem("global_gemini_prompt_general", prompt);
-            } else {
-                localStorage.setItem("global_gemini_prompt_wb", prompt);
-            }
-            geminiModal.style.display = 'none';
-            showToast("제미나이 질문이 저장되었습니다.");
-        });
-
-        document.getElementById('copy-general-btn').addEventListener('click', () => {
-            const noteText = document.getElementById('edit-note-textarea').value;
-            const geminiText = localStorage.getItem("global_gemini_prompt_general") || document.getElementById('gemini-prompt-textarea').value; 
-            
-            const textToCopy = `[본문 내용]\n${noteText}\n\n[제미나이 질문]\n${geminiText}`;
-            
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                showToast("복사되었습니다.");
-            }).catch(err => {
-                showCustomAlert("복사에 실패했습니다: " + err);
-            });
-        });
-
-        document.getElementById('save-wb-btn').addEventListener('click', () => {
-            if (!wbSelectedId) return;
-            const note = document.getElementById('wb-note-textarea').value;
-            const summary = document.getElementById('wb-summary-textarea').value;
-            const practice = document.getElementById('wb-practice-textarea').value;
-            
-            localStorage.setItem(wbSelectedId + "_note", note);
-            localStorage.setItem(wbSelectedId + "_summary", summary);
-            localStorage.setItem(wbSelectedId + "_practice", practice);
-            localStorage.setItem(wbSelectedId + "_rel1", rel1Dropdown.getValue());
-            localStorage.setItem(wbSelectedId + "_rel2", rel2Dropdown.getValue());
-            localStorage.setItem(wbSelectedId + "_rel3", rel3Dropdown.getValue());
-
-            showToast("성공적으로 저장되었습니다.");
-            
-            document.getElementById('wb-edit-modal-overlay').style.display = 'none';
-            if (currentOpenedReadId) {
-                openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
-            }
-        });
-
-        document.getElementById('copy-btn').addEventListener('click', () => {
-            const noteText = document.getElementById('wb-note-textarea').value;
-            const geminiText = localStorage.getItem("global_gemini_prompt_wb") || document.getElementById('gemini-prompt-textarea').value; 
-            
-            const textToCopy = `[본문 내용]\n${noteText}\n\n[제미나이 질문]\n${geminiText}`;
-            
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                showToast("복사되었습니다.");
-            }).catch(err => {
-                showCustomAlert("복사에 실패했습니다: " + err);
-            });
-        });
-
+        // 🚀 비동기(async) 백업 
         async function handleBackup(isSummary) {
             const backupData = {};
-            backupData["global_gemini_prompt_general"] = localStorage.getItem("global_gemini_prompt_general") || "";
-            backupData["global_gemini_prompt_wb"] = localStorage.getItem("global_gemini_prompt_wb") || "";
+            backupData["global_gemini_prompt_general"] = AppStorage.getItem("global_gemini_prompt_general") || "";
+            backupData["global_gemini_prompt_wb"] = AppStorage.getItem("global_gemini_prompt_wb") || "";
 
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
+            const keys = AppStorage.keys();
+            for (const key of keys) {
                 if (key.startsWith('audio_')) {
                     const isSummaryKey = key.endsWith('_summary') || key.endsWith('_practice');
                     if (isSummary && isSummaryKey) {
-                        backupData[key] = localStorage.getItem(key);
+                        backupData[key] = AppStorage.getItem(key);
                     } else if (!isSummary && !isSummaryKey) {
-                        backupData[key] = localStorage.getItem(key);
+                        backupData[key] = AppStorage.getItem(key);
                     }
                 }
             }
@@ -3145,12 +3067,13 @@
             showToast("기기에서 공유를 지원하지 않아 파일로 다운로드되었습니다.");
         }
 
+        // 🚀 비동기(async) 복원
         function handleRestore(event, isSummary) {
             const file = event.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     const restoredData = JSON.parse(e.target.result);
                     if (typeof restoredData !== 'object' || restoredData === null) {
@@ -3161,8 +3084,8 @@
                     if (confirm(`기존에 저장된 ${typeStr}이(가) 백업 파일의 내용으로 덮어씌워집니다. 진행하시겠습니까?`)) {
                         
                         const keysToRemove = [];
-                        for (let i = 0; i < localStorage.length; i++) {
-                            const key = localStorage.key(i);
+                        const keys = AppStorage.keys();
+                        for (const key of keys) {
                             if (key.startsWith('audio_')) {
                                 const isSummaryKey = key.endsWith('_summary') || key.endsWith('_practice');
                                 if (isSummary && isSummaryKey) {
@@ -3172,10 +3095,15 @@
                                 }
                             }
                         }
-                        keysToRemove.forEach(k => localStorage.removeItem(k));
+                        
+                        // 비동기로 DB에서 삭제
+                        for (const k of keysToRemove) {
+                            await AppStorage.removeItem(k);
+                        }
 
+                        // 비동기로 DB에 저장
                         for (const [key, value] of Object.entries(restoredData)) {
-                            localStorage.setItem(key, value);
+                            await AppStorage.setItem(key, value);
                         }
 
                         showToast("성공적으로 복원되었습니다.");
@@ -3190,143 +3118,13 @@
             reader.readAsText(file);
         }
 
-        document.getElementById('restore-note-input').addEventListener('change', (e) => handleRestore(e, false));
-        document.getElementById('restore-summary-input').addEventListener('change', (e) => handleRestore(e, true));
-        
-        document.getElementById('backup-note-btn').addEventListener('click', () => handleBackup(false));
-        document.getElementById('backup-summary-btn').addEventListener('click', () => handleBackup(true));
-
-        document.getElementById('close-read-modal').addEventListener('click', () => {
-            if (modalHistory.length > 0) {
-                const prev = modalHistory.pop();
-                openReadModal(prev.title, prev.id, true);
-            } else {
-                readAudioPlayer.pause();
-                readModalOverlay.style.display = 'none';
-            }
-        });
-
-        window.addEventListener('click', (e) => {
-            if (e.target === readModalOverlay) {
-                if (modalHistory.length > 0) {
-                    const prev = modalHistory.pop();
-                    openReadModal(prev.title, prev.id, true);
-                } else {
-                    readAudioPlayer.pause();
-                    readModalOverlay.style.display = 'none';
-                }
-            }
-            if (e.target === document.getElementById('edit-modal-overlay')) {
-                document.getElementById('edit-modal-overlay').style.display = 'none';
-                if (currentOpenedReadId) {
-                    openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
-                }
-            }
-            if (e.target === document.getElementById('wb-edit-modal-overlay')) {
-                document.getElementById('wb-edit-modal-overlay').style.display = 'none';
-                if (currentOpenedReadId) {
-                    openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
-                }
-            }
-            if (e.target === geminiModal) {
-                geminiModal.style.display = 'none';
-            }
-        });
-
-        document.getElementById('close-edit-modal').addEventListener('click', () => {
-            document.getElementById('edit-modal-overlay').style.display = 'none';
-            if (currentOpenedReadId) {
-                openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
-            }
-        });
-
-        document.getElementById('close-wb-edit-modal').addEventListener('click', () => {
-            document.getElementById('wb-edit-modal-overlay').style.display = 'none';
-            if (currentOpenedReadId) {
-                openReadModal(document.getElementById('read-modal-title').textContent, currentOpenedReadId, true);
-            }
-        });
-
         function showToast(message) {
             const toast = document.getElementById("toast");
             toast.textContent = message;
             toast.className = "toast show";
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2500);
         }
-
-        const bottomEditBar = document.getElementById('bottom-edit-bar');
-        const menuFab = document.getElementById('menu-fab');
-        const closeBarBtn = document.getElementById('close-bar-btn');
-
-        closeBarBtn.addEventListener('click', () => {
-            bottomEditBar.classList.add('hidden');
-            menuFab.classList.remove('hidden');
-        });
-
-        menuFab.addEventListener('click', () => {
-            bottomEditBar.classList.remove('hidden');
-            menuFab.classList.add('hidden');
-        });
-
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let currentX = 0;
-        let isSwiping = false;
-        const modalContentWrapper = document.getElementById('modal-content-wrapper');
-        const ebookBody = document.getElementById('ebook-body');
-
-        ebookBody.addEventListener('touchstart', (e) => {
-            if (!currentOpenedReadId) return;
-            
-            if (e.target.closest('button, input, .related-section, .related-item')) {
-                isSwiping = false;
-                return;
-            }
-
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            isSwiping = true;
-            modalContentWrapper.style.transition = 'none';
-        }, { passive: true });
-
-        ebookBody.addEventListener('touchmove', (e) => {
-            if (!isSwiping) return;
-            currentX = e.touches[0].clientX;
-            const currentY = e.touches[0].clientY;
-            
-            const xDiff = currentX - touchStartX;
-            const yDiff = Math.abs(currentY - touchStartY);
-
-            if (Math.abs(xDiff) > yDiff && Math.abs(xDiff) > 15) {
-                modalContentWrapper.style.transform = `translateX(${xDiff}px)`;
-                modalContentWrapper.style.boxShadow = xDiff > 0 ? '15px 0 30px rgba(0,0,0,0.2)' : '-15px 0 30px rgba(0,0,0,0.2)';
-            }
-        }, { passive: true });
-
-        ebookBody.addEventListener('touchend', (e) => {
-            if (!isSwiping) return;
-            isSwiping = false;
-
-            const xDiff = currentX - touchStartX;
-            const yDiff = Math.abs(e.changedTouches[0].clientY - touchStartY);
-            const threshold = window.innerWidth * 0.25;
-
-            modalContentWrapper.style.transition = 'transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease';
-
-            if (Math.abs(xDiff) > yDiff && Math.abs(xDiff) > threshold) {
-                if (xDiff > 0) {
-                    modalContentWrapper.style.transform = `translateX(100%)`;
-                    setTimeout(() => { navigateChapter(-1, 'right'); }, 50);
-                } else {
-                    modalContentWrapper.style.transform = `translateX(-100%)`;
-                    setTimeout(() => { navigateChapter(1, 'left'); }, 50);
-                }
-            } else {
-                modalContentWrapper.style.transform = 'translateX(0)';
-                modalContentWrapper.style.boxShadow = '0 0 25px rgba(0,0,0,0.15)';
-            }
-        }, { passive: true });
-
+        
         function navigateChapter(direction, animType) {
             const currentIndex = editableChapters.findIndex(ch => ch.id === currentOpenedReadId);
             if (currentIndex === -1) return;
@@ -3349,6 +3147,13 @@
                 showToast(direction > 0 ? "마지막 항목입니다." : "첫 번째 항목입니다.");
             }
         }
+
+        // ====================================================================
+        // 🚀 앱 실행: 모든 준비가 끝나면 데이터를 로드하고 시작합니다.
+        // ====================================================================
+        bootstrapApp();
+
     </script>
 </body>
 </html>
+
