@@ -1869,7 +1869,24 @@
                     }
 
                     const lessonId = `audio_${getNextIndex()}`;
-                    editableChapters.push({ id: lessonId, title: lessonTitle, audioFile: `${lessonId}.mp3`, section: sectionName });
+                    
+                    // 🚀 제72과(audio_410)인 경우 2개 파일이 연속 재생되도록 playlist 적용
+                    if (i === 72) {
+                        editableChapters.push({ 
+                            id: lessonId, 
+                            title: lessonTitle, 
+                            playlist: [`audio_410_1.mp3`, `audio_410_2.mp3`], 
+                            section: sectionName 
+                        });
+                    } else {
+                        // 나머지는 기존처럼 단일 mp3 파일 재생
+                        editableChapters.push({ 
+                            id: lessonId, 
+                            title: lessonTitle, 
+                            audioFile: `${lessonId}.mp3`, 
+                            section: sectionName 
+                        });
+                    }
 
                     const subLi = document.createElement('li');
                     subLi.className = 'toc-item';
