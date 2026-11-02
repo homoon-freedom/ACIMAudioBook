@@ -1870,23 +1870,23 @@ if (i >= 362 && i <= 365) {
 
                     const lessonId = `audio_${getNextIndex()}`;
                     
-                    // 🚀 제72과(audio_410)인 경우 2개 파일이 연속 재생되도록 playlist 적용
-                    if (i === 72 || i === 73 || i === 75 || i === 76) {
-                        editableChapters.push({ 
-                            id: lessonId, 
-                            title: lessonTitle, 
-                            playlist: [`${lessonId}_1.mp3`, `${lessonId}_2.mp3`], 
-                            section: sectionName 
-                        });
-                    } else {
-                        // 나머지는 기존처럼 단일 mp3 파일 재생
-                        editableChapters.push({ 
-                            id: lessonId, 
-                            title: lessonTitle, 
-                            audioFile: `${lessonId}.mp3`, 
-                            section: sectionName 
-                        });
-                    }
+// ✅ 지정한 과(2, 72, 73)만 배열 안에 적어줍니다.
+if ([72,73,75,76].includes(i)) {
+    editableChapters.push({ 
+        id: lessonId, 
+        title: lessonTitle, 
+        playlist: [`${lessonId}_1.mp3`, `${lessonId}_2.mp3`], 
+        section: sectionName 
+    });
+} else {
+    // 따로 표시하지 않은 나머지 모든 과는 하나의 단일 파일로 처리
+    editableChapters.push({ 
+        id: lessonId, 
+        title: lessonTitle, 
+        audioFile: `${lessonId}.mp3`, 
+        section: sectionName 
+    });
+}
 
                     const subLi = document.createElement('li');
                     subLi.className = 'toc-item';
